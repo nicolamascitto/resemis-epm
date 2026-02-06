@@ -1,0 +1,165 @@
+================================================================================
+FEATURE 04: WORKING CAPITAL ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: High
+DEPENDENCIES: Revenue Engine (01), COGS Engine (02)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Model explicit working capital dynamics to convert accrual accounting
+to cash-basis. EBITDA is NOT cash.
+
+Working Capital = f(Revenue, COGS, DSO, DIO, DPO)
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- AR[t]           : Accounts Receivable balance
+- Inventory[t]    : Inventory balance
+- AP[t]           : Accounts Payable balance
+- Delta_AR[t]     : Change in AR
+- Delta_Inventory[t]: Change in Inventory
+- Delta_AP[t]     : Change in AP
+- Delta_WC[t]     : Net change in Working Capital
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+From Revenue Engine:
+- Revenue_total[t]        : Total revenue per month
+
+From COGS Engine:
+- Total_COGS[t]           : Total COGS per month
+
+Working Capital Terms:
+- DSO_days                : Days Sales Outstanding
+- DIO_days                : Days Inventory Outstanding
+- DPO_days                : Days Payables Outstanding
+
+Assumption: 30 days per month for conversion.
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+Step 1: Accounts Receivable
+    AR[t] = Revenue_total[t] * (DSO_days / 30)
+    Delta_AR[t] = AR[t] - AR[t-1]
+
+    Note: AR[0] = 0 (or initial balance if specified)
+
+Step 2: Inventory
+    Inventory[t] = Total_COGS[t] * (DIO_days / 30)
+    Delta_Inventory[t] = Inventory[t] - Inventory[t-1]
+
+    Note: Inventory[0] = 0 (or initial balance if specified)
+
+Step 3: Accounts Payable
+    AP[t] = Total_COGS[t] * (DPO_days / 30)
+    Delta_AP[t] = AP[t] - AP[t-1]
+
+    Note: AP[0] = 0 (or initial balance if specified)
+
+Step 4: Net Working Capital Change
+    Delta_WC[t] = Delta_AR[t] + Delta_Inventory[t] - Delta_AP[t]
+
+    Interpretation:
+    - Positive Delta_WC = Cash consumed (growth consumes cash)
+    - Negative Delta_WC = Cash released
+
+================================================================================
+5. SIGN CONVENTIONS
+================================================================================
+
+Revenue increases:
+    -> AR increases -> Delta_AR positive -> Cash decreases
+
+COGS increases:
+    -> Inventory increases -> Delta_Inventory positive -> Cash decreases
+    -> AP increases -> Delta_AP positive -> Cash INCREASES (delay payment)
+
+Net effect of growth:
+    Delta_WC typically positive (cash consumed during growth)
+
+================================================================================
+6. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- Ignoring working capital (EBITDA = Cash)
+- Negative DSO, DIO, DPO
+- WC calculations based on EUR revenue directly without days conversion
+
+REQUIRED:
+- Explicit day-based conversion
+- Cumulative balance tracking
+- Delta calculation for cashflow
+
+================================================================================
+7. VALIDATIONS (Fail Loud)
+================================================================================
+
+- DSO_days >= 0
+- DIO_days >= 0
+- DPO_days >= 0
+- AR[t] >= 0
+- Inventory[t] >= 0
+- AP[t] >= 0
+- Revenue = 0 -> AR = 0
+- COGS = 0 -> Inventory = 0, AP = 0
+
+Sign coherence:
+- Increase Revenue -> Increase AR -> Decrease Cash (through Delta_WC)
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+8. SCENARIO RULES
+================================================================================
+
+Scenarios may vary (conservatively):
+- DSO_days (longer = worse)
+- DIO_days (longer = worse)
+- DPO_days (longer = better)
+
+Scenarios may NEVER:
+- Change formulas
+- Apply different logic per scenario
+
+================================================================================
+9. TEST CHECKLIST
+================================================================================
+
+[ ] Zero test: Revenue=0 -> AR=0
+[ ] Zero test: COGS=0 -> Inventory=0, AP=0
+[ ] DSO test: Higher DSO -> Higher AR -> Worse cash
+[ ] DIO test: Higher DIO -> Higher Inventory -> Worse cash
+[ ] DPO test: Higher DPO -> Higher AP -> Better cash
+[ ] Excel reconciliation: +/- 0.1% on Delta_WC
+[ ] Balance sheet coherence: AR + Inventory - AP = Net WC
+
+================================================================================
+10. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    revenue: Dict[month, float]
+    cogs: Dict[month, float]
+    wc_terms: WCTerms (dso_days, dio_days, dpo_days)
+
+Output:
+    WCOutput:
+        ar: Dict[month, float]
+        inventory: Dict[month, float]
+        ap: Dict[month, float]
+        delta_wc: Dict[month, float]
+
+================================================================================
+END OF FEATURE 04
+================================================================================

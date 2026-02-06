@@ -1,0 +1,156 @@
+================================================================================
+FEATURE 03: OPEX ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical
+DEPENDENCIES: Revenue Engine (Feature 01) for activity drivers
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Model operating expenses as a function of:
+- Time-based ramps (headcount, infrastructure)
+- Activity drivers (markets, customers, volumes)
+
+OpEx must NOT be a flat % of revenue.
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- Fixed_OpEx[t,c]         : Fixed OpEx per category per month
+- Variable_OpEx[t,a]      : Variable OpEx per activity driver per month
+- Total_Fixed_OpEx[t]     : Total fixed OpEx per month
+- Total_Variable_OpEx[t]  : Total variable OpEx per month
+- Total_OpEx[t]           : Total OpEx per month
+- OpEx_allocated[t,p]     : OpEx allocated to products (reporting only)
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+Fixed OpEx:
+- Fixed_OpEx_base[c]      : Base monthly cost per category
+- Fixed_OpEx_ramp[t,c]    : Time-based ramp factor per category
+
+Categories (c):
+- management_ga           : Management & G&A
+- it_admin                : IT & Administration
+- rd_base                 : R&D (not output-linked)
+- legal_compliance        : Legal & Compliance
+
+Variable OpEx:
+- Activity_driver_value[t,a] : Driver quantity per month
+- OpEx_per_unit[a]           : EUR per unit of activity
+
+Activity Drivers (a):
+- units_kg_total          : Total kg sold (from Revenue Engine)
+- active_markets          : Number of active markets
+- active_customers        : Number of active customers
+
+Sales & Marketing (special case):
+- SM_fixed_base           : Fixed S&M base cost
+- SM_ramp_factor[t]       : Time-based S&M ramp
+- CAC_per_market[m]       : Customer acquisition cost per market
+- New_markets_activated[t,m]: Markets activated in month t
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+Step 1: Fixed OpEx per Category
+    Fixed_OpEx[t,c] = Fixed_OpEx_base[c] * Fixed_OpEx_ramp[t,c]
+
+Step 2: Total Fixed OpEx
+    Total_Fixed_OpEx[t] = SUM_c(Fixed_OpEx[t,c])
+
+Step 3: Variable OpEx per Driver
+    Variable_OpEx[t,a] = Activity_driver_value[t,a] * OpEx_per_unit[a]
+
+Step 4: Sales & Marketing OpEx
+    SM_OpEx[t] = SM_fixed_base * SM_ramp_factor[t]
+                 + SUM_m(New_markets_activated[t,m] * CAC_per_market[m])
+
+Step 5: Total Variable OpEx
+    Total_Variable_OpEx[t] = SUM_a(Variable_OpEx[t,a]) + SM_OpEx[t]
+
+Step 6: Total OpEx
+    Total_OpEx[t] = Total_Fixed_OpEx[t] + Total_Variable_OpEx[t]
+
+Step 7: Allocation (Reporting Only)
+    IF Units_kg_total[t] > 0:
+        OpEx_allocated[t,p] = Total_OpEx[t]
+                               * (Units_kg_product[t,p] / Units_kg_total[t])
+    ELSE:
+        OpEx_allocated[t,p] = 0
+
+================================================================================
+5. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- OpEx = Revenue * X% (flat percentage)
+- OpEx constant over time without justification
+- Hardcoded values per scenario
+
+REQUIRED:
+- Ramp factors for growth phases
+- Activity drivers linked to real metrics
+- CAC explicitly modeled
+
+================================================================================
+6. VALIDATIONS (Fail Loud)
+================================================================================
+
+- All costs >= 0
+- Ramp factors >= 0
+- OpEx does NOT depend on EUR revenue (only on activity metrics)
+- Zero activity -> Zero variable OpEx
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+7. SCENARIO RULES
+================================================================================
+
+Scenarios may vary:
+- Fixed_OpEx_ramp[t,c]
+- OpEx_per_unit[a]
+- CAC_per_market[m]
+- Market activation timing
+- SM_ramp_factor[t]
+
+Scenarios may NEVER:
+- Change formulas
+- Hardcode values per scenario name
+
+================================================================================
+8. TEST CHECKLIST
+================================================================================
+
+[ ] Zero test: No activity -> Only fixed OpEx
+[ ] Ramp test: Increase ramp -> Increase OpEx
+[ ] Activity isolation: Vary one driver at a time
+[ ] Excel reconciliation: +/- 0.1% on Total_OpEx
+[ ] Scenario invariance: Same formulas, different inputs
+
+================================================================================
+9. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    activity_drivers: Dict[tuple[month, driver_id], float]
+    ramps: Dict[tuple[month, category], float]
+    sm_params: SMParams
+
+Output:
+    OpExOutput:
+        fixed_opex: Dict[tuple[month, category], float]
+        variable_opex: Dict[tuple[month, driver], float]
+        total_opex: Dict[month, float]
+
+================================================================================
+END OF FEATURE 03
+================================================================================

@@ -1,0 +1,218 @@
+================================================================================
+TASKS: FEATURE 09 - VALIDATION & TESTING
+================================================================================
+
+FEATURE: Validation & Testing
+TOTAL TASKS: 8
+BLOCKED BY: All Features (01-08)
+TIMING: Parallel with feature development + Final integration
+
+================================================================================
+TASK 9.1: Set up test infrastructure
+================================================================================
+
+STATUS: [ ] Not Started
+
+DESCRIPTION:
+Create test directory structure and pytest configuration.
+
+DELIVERABLE:
+/tests
+    /unit
+        __init__.py
+        test_revenue.py
+        test_cogs.py
+        test_opex.py
+        test_working_capital.py
+        test_cashflow.py
+        test_valuation.py
+        test_assumptions.py
+    /integration
+        __init__.py
+        test_pipeline.py
+        test_scenarios.py
+    /reconciliation
+        __init__.py
+        test_excel_match.py
+    /fixtures
+        base_assumptions.yaml
+        test_bom.yaml
+    conftest.py
+    pytest.ini
+
+================================================================================
+TASK 9.2: Create test fixtures
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.1, Feature 08
+
+DESCRIPTION:
+Create reusable test fixtures for all engines.
+
+DELIVERABLE:
+```python
+# tests/conftest.py
+
+@pytest.fixture
+def base_assumptions():
+    return load_assumptions("tests/fixtures/base_assumptions.yaml")
+
+@pytest.fixture
+def simple_bom():
+    return {
+        "biocore": ProductBOM(
+            product_id="biocore",
+            inputs=[BOMInput("raw_material", 1.05)]
+        )
+    }
+
+@pytest.fixture
+def time_range():
+    return generate_months("2026-01", "2030-12")
+```
+
+================================================================================
+TASK 9.3: Write unit tests for Revenue Engine
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.2, Feature 01
+
+TESTS:
+- test_zero_som_zero_revenue
+- test_ramp_increases_volume_first
+- test_price_isolation
+- test_capacity_constraint
+- test_mix_sums_to_one
+- test_market_activation
+
+================================================================================
+TASK 9.4: Write unit tests for COGS Engine
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.2, Feature 02
+
+TESTS:
+- test_zero_volume_zero_cogs
+- test_bom_linearity
+- test_no_flat_cogs
+- test_input_price_ramp
+- test_fixed_cogs_allocation
+
+================================================================================
+TASK 9.5: Write unit tests for remaining engines
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.2, Features 03-06
+
+TESTS FOR OPEX:
+- test_zero_activity_only_fixed
+- test_ramp_increases_opex
+- test_cac_calculation
+
+TESTS FOR WC:
+- test_zero_revenue_zero_ar
+- test_dso_impact
+- test_dpo_impact
+
+TESTS FOR CASHFLOW:
+- test_ebitda_formula
+- test_wc_adjustment
+- test_capex_impact
+
+TESTS FOR VALUATION:
+- test_zero_fcf_zero_ev
+- test_discount_sensitivity
+- test_irr_calculation
+
+================================================================================
+TASK 9.6: Write integration tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 9.3-9.5, Feature 07
+
+TESTS:
+- test_full_pipeline_executes
+- test_scenario_ordering
+- test_determinism
+- test_no_scenario_branching
+
+================================================================================
+TASK 9.7: Set up Excel reconciliation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.6
+
+DESCRIPTION:
+Compare engine outputs to Excel baseline.
+
+DELIVERABLE:
+```python
+# tests/reconciliation/test_excel_match.py
+
+TOLERANCE = 0.001  # 0.1%
+
+def test_revenue_reconciliation(engine_results, excel_data):
+    for month in engine_results.months:
+        engine_val = engine_results.revenue_total[month]
+        excel_val = excel_data.revenue_total[month]
+        variance = abs(engine_val - excel_val) / abs(excel_val)
+        assert variance <= TOLERANCE, f"Revenue mismatch at {month}: {variance:.2%}"
+
+def test_cogs_reconciliation(...)
+def test_ebitda_reconciliation(...)
+def test_fcf_reconciliation(...)
+def test_irr_reconciliation(...)
+```
+
+================================================================================
+TASK 9.8: Create validation report generator
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 9.7
+
+DESCRIPTION:
+Generate comprehensive validation report.
+
+OUTPUT:
+```
+VALIDATION REPORT
+=================
+Date: 2026-01-15
+Scenario: base
+
+UNIT TESTS
+----------
+Revenue Engine: 8/8 PASSED
+COGS Engine: 6/6 PASSED
+OpEx Engine: 5/5 PASSED
+Working Capital: 4/4 PASSED
+Cashflow Engine: 6/6 PASSED
+Valuation Engine: 7/7 PASSED
+
+INTEGRATION TESTS
+-----------------
+Full Pipeline: PASSED
+Scenario Ordering: PASSED
+Determinism: PASSED
+
+EXCEL RECONCILIATION
+--------------------
+Revenue Total: PASSED (variance: 0.02%)
+Total COGS: PASSED (variance: 0.05%)
+EBITDA: PASSED (variance: 0.08%)
+Free CF: PASSED (variance: 0.07%)
+IRR: PASSED (variance: 0.03%)
+
+OVERALL: PASSED
+```
+
+================================================================================
+END OF TASKS FOR FEATURE 09
+================================================================================

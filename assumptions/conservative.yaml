@@ -1,0 +1,123 @@
+# =============================================================================
+# RESEMIS EPM ENGINE - CONSERVATIVE CASE OVERRIDES
+# =============================================================================
+# This file contains ONLY values that differ from base.yaml
+# Conservative = Downside scenario (pessimistic assumptions)
+# RULE: Conservative <= Base for all positive metrics
+# =============================================================================
+
+scenario_id: "conservative"
+description: "Downside case - pessimistic assumptions"
+
+# -----------------------------------------------------------------------------
+# VOLUME - Lower market penetration
+# -----------------------------------------------------------------------------
+volume:
+  som_share:
+    per_market_pct:
+      italy: 0.07          # Base: 0.10 (-30%)
+      eu: 0.03             # Base: 0.05 (-40%)
+    ramp:
+      by_market:
+        italy:
+          duration_months: 30    # Base: 24 (slower ramp)
+        eu:
+          duration_months: 42    # Base: 36 (slower ramp)
+
+# -----------------------------------------------------------------------------
+# PRICING - Higher discounts (lower realized prices)
+# -----------------------------------------------------------------------------
+pricing:
+  discounts:
+    by_product:
+      runcover:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.15    # Base: 0.10
+              "2027-01": 0.12    # Base: 0.08
+              "2028-01": 0.10    # Base: 0.06
+          eu:
+            by_month:
+              "2027-01": 0.18    # Base: 0.12
+              "2028-01": 0.15    # Base: 0.10
+      littercover:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.12    # Base: 0.08
+              "2027-01": 0.10    # Base: 0.06
+          eu:
+            by_month:
+              "2027-01": 0.15    # Base: 0.10
+              "2028-01": 0.12    # Base: 0.08
+      biocore:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.10    # Base: 0.05
+              "2027-01": 0.08    # Base: 0.05
+          eu:
+            by_month:
+              "2027-01": 0.12    # Base: 0.08
+              "2028-01": 0.10    # Base: 0.06
+
+# -----------------------------------------------------------------------------
+# INPUT PRICES - Higher costs (slower cost reduction)
+# -----------------------------------------------------------------------------
+input_prices:
+  by_input:
+    raw_material_1:
+      base_price: 1.30         # Base: 1.20 (+8%)
+      by_month:
+        "2027-01": 1.25        # Base: 1.15
+        "2028-01": 1.20        # Base: 1.10
+        "2029-01": 1.15        # Base: 1.05
+    raw_material_2:
+      base_price: 1.00         # Base: 0.90 (+11%)
+      by_month:
+        "2027-01": 0.95        # Base: 0.88
+        "2028-01": 0.90        # Base: 0.85
+    raw_material_3:
+      base_price: 1.65         # Base: 1.50 (+10%)
+      by_month:
+        "2027-01": 1.60        # Base: 1.45
+        "2028-01": 1.55        # Base: 1.40
+
+# -----------------------------------------------------------------------------
+# OPEX - Higher cost ramps
+# -----------------------------------------------------------------------------
+opex:
+  sales_marketing:
+    ramp:
+      by_month:
+        "2026-01": 1.2         # Base: 1.0 (higher early spend)
+        "2027-01": 1.8         # Base: 1.5
+        "2028-01": 2.5         # Base: 2.0
+
+# -----------------------------------------------------------------------------
+# WORKING CAPITAL - Worse terms
+# -----------------------------------------------------------------------------
+working_capital:
+  dso_days: 60                 # Base: 45 (slower collections)
+  dio_days: 45                 # Base: 30 (more inventory)
+  dpo_days: 45                 # Base: 60 (faster payments)
+
+# -----------------------------------------------------------------------------
+# VALUATION - Higher discount rate
+# -----------------------------------------------------------------------------
+valuation:
+  discount_rate: 0.18          # Base: 0.15
+  terminal_growth_rate: 0.015  # Base: 0.02
+
+# =============================================================================
+# CONSERVATIVE SCENARIO SUMMARY
+# =============================================================================
+# - SOM penetration: -30% to -40% vs base
+# - Ramp duration: +25% longer
+# - Discounts: +5pp higher (lower realized prices)
+# - Input costs: +8% to +11% higher
+# - S&M spend: +20% to +25% higher
+# - Working capital: worse terms (DSO+15, DIO+15, DPO-15)
+# - Discount rate: +3pp higher
+# =============================================================================

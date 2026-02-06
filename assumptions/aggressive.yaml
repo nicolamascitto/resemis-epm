@@ -1,0 +1,145 @@
+# =============================================================================
+# RESEMIS EPM ENGINE - AGGRESSIVE CASE OVERRIDES
+# =============================================================================
+# This file contains ONLY values that differ from base.yaml
+# Aggressive = Upside scenario (optimistic assumptions)
+# RULE: Aggressive >= Base for all positive metrics
+# =============================================================================
+
+scenario_id: "aggressive"
+description: "Upside case - optimistic assumptions"
+
+# -----------------------------------------------------------------------------
+# VOLUME - Higher market penetration
+# -----------------------------------------------------------------------------
+volume:
+  som_share:
+    per_market_pct:
+      italy: 0.15          # Base: 0.10 (+50%)
+      eu: 0.08             # Base: 0.05 (+60%)
+    ramp:
+      by_market:
+        italy:
+          duration_months: 18    # Base: 24 (faster ramp)
+        eu:
+          duration_months: 30    # Base: 36 (faster ramp)
+
+# -----------------------------------------------------------------------------
+# PRICING - Lower discounts (higher realized prices)
+# -----------------------------------------------------------------------------
+pricing:
+  discounts:
+    by_product:
+      runcover:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.08    # Base: 0.10
+              "2027-01": 0.05    # Base: 0.08
+              "2028-01": 0.03    # Base: 0.06
+          eu:
+            by_month:
+              "2027-01": 0.08    # Base: 0.12
+              "2028-01": 0.06    # Base: 0.10
+      littercover:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.05    # Base: 0.08
+              "2027-01": 0.04    # Base: 0.06
+          eu:
+            by_month:
+              "2027-01": 0.06    # Base: 0.10
+              "2028-01": 0.05    # Base: 0.08
+      biocore:
+        by_market:
+          italy:
+            by_month:
+              "2026-01": 0.03    # Base: 0.05
+              "2027-01": 0.02    # Base: 0.05
+          eu:
+            by_month:
+              "2027-01": 0.05    # Base: 0.08
+              "2028-01": 0.04    # Base: 0.06
+
+# -----------------------------------------------------------------------------
+# INPUT PRICES - Lower costs (faster cost reduction)
+# -----------------------------------------------------------------------------
+input_prices:
+  by_input:
+    raw_material_1:
+      base_price: 1.15         # Base: 1.20 (-4%)
+      by_month:
+        "2027-01": 1.08        # Base: 1.15
+        "2028-01": 1.00        # Base: 1.10
+        "2029-01": 0.95        # Base: 1.05
+    raw_material_2:
+      base_price: 0.85         # Base: 0.90 (-6%)
+      by_month:
+        "2027-01": 0.80        # Base: 0.88
+        "2028-01": 0.75        # Base: 0.85
+    raw_material_3:
+      base_price: 1.40         # Base: 1.50 (-7%)
+      by_month:
+        "2027-01": 1.30        # Base: 1.45
+        "2028-01": 1.20        # Base: 1.40
+
+# -----------------------------------------------------------------------------
+# OPEX - More efficient scaling
+# -----------------------------------------------------------------------------
+opex:
+  fixed:
+    by_category:
+      management_ga:
+        ramp:
+          by_month:
+            "2026-01": 1.0
+            "2027-01": 1.2     # Base: 1.3
+            "2028-01": 1.4     # Base: 1.6
+            "2029-01": 1.5     # Base: 1.8
+      rd_base:
+        ramp:
+          by_month:
+            "2026-01": 1.0
+            "2027-01": 1.3     # Base: 1.5
+            "2028-01": 1.5     # Base: 1.8
+            "2029-01": 1.3     # Base: 1.5
+
+  sales_marketing:
+    ramp:
+      by_month:
+        "2026-01": 0.8         # Base: 1.0 (more efficient)
+        "2027-01": 1.2         # Base: 1.5
+        "2028-01": 1.6         # Base: 2.0
+    cac:
+      by_market:
+        italy: 40000           # Base: 50000 (-20%)
+        eu: 80000              # Base: 100000 (-20%)
+
+# -----------------------------------------------------------------------------
+# WORKING CAPITAL - Better terms
+# -----------------------------------------------------------------------------
+working_capital:
+  dso_days: 35                 # Base: 45 (faster collections)
+  dio_days: 20                 # Base: 30 (leaner inventory)
+  dpo_days: 75                 # Base: 60 (better payment terms)
+
+# -----------------------------------------------------------------------------
+# VALUATION - Lower discount rate
+# -----------------------------------------------------------------------------
+valuation:
+  discount_rate: 0.12          # Base: 0.15
+  terminal_growth_rate: 0.025  # Base: 0.02
+
+# =============================================================================
+# AGGRESSIVE SCENARIO SUMMARY
+# =============================================================================
+# - SOM penetration: +50% to +60% vs base
+# - Ramp duration: -17% to -25% faster
+# - Discounts: -2pp to -4pp lower (higher realized prices)
+# - Input costs: -4% to -7% lower
+# - OpEx ramps: -10% to -20% more efficient
+# - CAC: -20% lower
+# - Working capital: better terms (DSO-10, DIO-10, DPO+15)
+# - Discount rate: -3pp lower
+# =============================================================================

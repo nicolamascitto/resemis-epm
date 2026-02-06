@@ -1,0 +1,151 @@
+================================================================================
+TASKS: FEATURE 07 - SCENARIO ENGINE
+================================================================================
+
+FEATURE: Scenario Engine (Orchestrator)
+TOTAL TASKS: 6
+BLOCKED BY: All Engine Features (01-06), Feature 08
+
+================================================================================
+TASK 7.1: Implement assumption loader
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 08
+
+DESCRIPTION:
+Load and merge assumptions for each scenario.
+
+DELIVERABLE:
+```python
+def load_scenario_assumptions(
+    scenario_id: str,
+    assumptions_dir: Path
+) -> Assumptions:
+    """
+    Load base.yaml, then merge scenario-specific overrides.
+    """
+    base = load_yaml(assumptions_dir / "base.yaml")
+    if scenario_id != "base":
+        overrides = load_yaml(assumptions_dir / f"{scenario_id}.yaml")
+        return deep_merge(base, overrides)
+    return Assumptions.from_dict(base)
+```
+
+================================================================================
+TASK 7.2: Implement scenario execution loop
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 7.1, Features 01-06
+
+DELIVERABLE:
+```python
+def run_scenario(scenario_id: str, assumptions_dir: Path) -> ScenarioResult:
+    """
+    Execute full pipeline for one scenario.
+    """
+    assumptions = load_scenario_assumptions(scenario_id, assumptions_dir)
+    validate_assumptions(assumptions)
+
+    revenue = revenue_engine(assumptions)
+    cogs = cogs_engine(revenue.units_kg, assumptions.bom, ...)
+    opex = opex_engine(extract_drivers(revenue), ...)
+    wc = working_capital_engine(revenue.revenue_total, cogs.total_cogs, ...)
+    cashflow = cashflow_engine(...)
+    valuation = valuation_engine(cashflow.free_cf, ...)
+
+    return ScenarioResult(
+        scenario_id=scenario_id,
+        revenue=revenue,
+        cogs=cogs,
+        opex=opex,
+        wc=wc,
+        cashflow=cashflow,
+        valuation=valuation
+    )
+```
+
+================================================================================
+TASK 7.3: Implement multi-scenario runner
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 7.2
+
+DELIVERABLE:
+```python
+def run_all_scenarios(
+    scenarios: List[str],
+    assumptions_dir: Path
+) -> Dict[str, ScenarioResult]:
+    """
+    Run all scenarios and collect results.
+    """
+    results = {}
+    for scenario_id in scenarios:
+        results[scenario_id] = run_scenario(scenario_id, assumptions_dir)
+    return results
+```
+
+================================================================================
+TASK 7.4: Implement scenario comparison
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 7.3
+
+DELIVERABLE:
+```python
+def compare_scenarios(
+    results: Dict[str, ScenarioResult],
+    base_scenario: str = "base"
+) -> ComparisonMatrix:
+    """
+    Generate comparison matrix and variance analysis.
+    """
+    pass
+```
+
+OUTPUT:
+- Side-by-side metrics
+- Variance vs base
+- Summary table
+
+================================================================================
+TASK 7.5: Implement scenario ordering validation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 7.3
+
+DESCRIPTION:
+Validate: Conservative <= Base <= Aggressive for key metrics.
+
+METRICS TO CHECK:
+- Revenue_total (final)
+- EBITDA (final)
+- FCF (cumulative)
+- EV
+- IRR
+- MOIC
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+TASK 7.6: Add Scenario Engine tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 7.4, 7.5
+
+TESTS:
+- [ ] Same input -> Same output (determinism)
+- [ ] Override applies correctly
+- [ ] Ordering validated
+- [ ] Isolation (changing one scenario doesn't affect others)
+- [ ] No scenario-specific branching
+
+================================================================================
+END OF TASKS FOR FEATURE 07
+================================================================================

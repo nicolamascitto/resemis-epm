@@ -1,0 +1,263 @@
+================================================================================
+FEATURE 07: SCENARIO ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical (Core Orchestrator)
+DEPENDENCIES: All Engine Features (01-06)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Orchestrate the EPM engine across multiple scenarios with:
+- Same logic, different inputs
+- No branching based on scenario name
+- Reproducible, deterministic execution
+
+GOLDEN RULE: Scenarios change INPUTS only, never FORMULAS.
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+Per Scenario:
+- All fact tables (volume, revenue, cogs, opex, cashflow, valuation)
+- All KPIs
+
+Aggregated:
+- Scenario comparison matrix
+- Variance analysis (vs base)
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+Assumptions Files:
+- base.yaml           : Base case assumptions
+- conservative.yaml   : Downside assumptions
+- aggressive.yaml     : Upside assumptions
+
+Scenario Configuration:
+- scenario_ids        : List of scenarios to run
+- base_scenario       : Reference scenario for variance
+
+Engine Functions:
+- revenue_engine()
+- cogs_engine()
+- opex_engine()
+- working_capital_engine()
+- cashflow_engine()
+- valuation_engine()
+
+================================================================================
+4. EXECUTION FLOW (Strict Order)
+================================================================================
+
+for scenario_id in scenarios:
+
+    # 1. Load assumptions
+    assumptions = load_yaml(f"{scenario_id}.yaml")
+
+    # 2. Validate assumptions
+    validate_assumptions(assumptions)
+
+    # 3. Run Revenue Engine
+    revenue_output = revenue_engine(assumptions)
+
+    # 4. Run COGS Engine
+    cogs_output = cogs_engine(
+        units_kg=revenue_output.units_kg,
+        bom=assumptions.bom,
+        input_prices=assumptions.input_prices
+    )
+
+    # 5. Run OpEx Engine
+    opex_output = opex_engine(
+        activity_drivers=extract_drivers(revenue_output),
+        ramps=assumptions.opex_ramps
+    )
+
+    # 6. Run Working Capital Engine
+    wc_output = working_capital_engine(
+        revenue=revenue_output.revenue_total,
+        cogs=cogs_output.total_cogs,
+        wc_terms=assumptions.working_capital
+    )
+
+    # 7. Run Cashflow Engine
+    cashflow_output = cashflow_engine(
+        revenue=revenue_output.revenue_total,
+        cogs=cogs_output.total_cogs,
+        opex=opex_output.total_opex,
+        delta_wc=wc_output.delta_wc,
+        capex=assumptions.capex,
+        funding=assumptions.funding
+    )
+
+    # 8. Run Valuation Engine
+    valuation_output = valuation_engine(
+        free_cf=cashflow_output.free_cf,
+        ebitda=cashflow_output.ebitda,
+        params=assumptions.valuation
+    )
+
+    # 9. Store results
+    results[scenario_id] = {
+        'revenue': revenue_output,
+        'cogs': cogs_output,
+        'opex': opex_output,
+        'wc': wc_output,
+        'cashflow': cashflow_output,
+        'valuation': valuation_output
+    }
+
+    # 10. Validate results
+    validate_results(results[scenario_id], scenario_id)
+
+# 11. Cross-scenario validation
+validate_scenario_ordering(results)
+
+================================================================================
+5. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+    if scenario_id == 'conservative':
+        # Different logic
+    elif scenario_id == 'aggressive':
+        # Different logic
+
+    switch(scenario_id):
+        case 'base': ...
+
+REQUIRED:
+    # Same function, different inputs
+    output = engine_function(inputs_for_scenario)
+
+================================================================================
+6. ASSUMPTION OVERRIDE MECHANISM
+================================================================================
+
+Base assumptions serve as defaults.
+Scenario files override specific values only.
+
+def override_assumptions(base, scenario):
+    merged = deep_copy(base)
+    for key, value in scenario.items():
+        if key in merged:
+            if is_dict(value):
+                merged[key] = override_assumptions(merged[key], value)
+            else:
+                merged[key] = value
+        else:
+            merged[key] = value
+    return merged
+
+================================================================================
+7. VALIDATIONS
+================================================================================
+
+Pre-Execution:
+- All required assumption keys present
+- No missing scenario files
+- Schema validation passes
+
+Post-Execution:
+- Scenario ordering: Conservative <= Base <= Aggressive
+  For: Revenue, EBITDA, FCF, EV, IRR, MOIC
+
+- Determinism check: Same inputs -> Same outputs
+
+Cross-Scenario:
+- Conservative MUST NOT outperform Base
+- Aggressive MUST NOT underperform Base
+- If violated -> BLOCKING ERROR
+
+================================================================================
+8. SCENARIO COMPARISON OUTPUT
+================================================================================
+
+comparison_matrix = {
+    'revenue_total': {
+        'base': [...],
+        'conservative': [...],
+        'aggressive': [...]
+    },
+    'variance_vs_base': {
+        'conservative': [...],  # negative expected
+        'aggressive': [...]     # positive expected
+    },
+    'summary': {
+        'metric': ['base', 'conservative', 'aggressive'],
+        'total_revenue': [X, Y, Z],
+        'irr': [A, B, C],
+        'moic': [D, E, F]
+    }
+}
+
+================================================================================
+9. TEST CHECKLIST
+================================================================================
+
+[ ] Same input test: Same assumptions -> Identical output
+[ ] Override test: Scenario override applies correctly
+[ ] Ordering test: Conservative <= Base <= Aggressive
+[ ] Isolation test: Changing one scenario doesn't affect others
+[ ] Completeness test: All scenarios produce all outputs
+[ ] No branch test: Code review for scenario-specific logic
+
+================================================================================
+10. ERROR HANDLING
+================================================================================
+
+If any engine fails:
+    1. Log error with scenario_id and engine name
+    2. STOP execution (do not continue to next scenario)
+    3. Report partial results if available
+
+If scenario ordering violated:
+    1. Flag specific metrics that violate
+    2. BLOCKING ERROR (model is inconsistent)
+
+================================================================================
+11. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    scenarios: List[str]  # ['base', 'conservative', 'aggressive']
+    assumptions_dir: Path
+
+Output:
+    ScenarioResults:
+        results: Dict[scenario_id, EngineOutputs]
+        comparison: ComparisonMatrix
+        validation: ValidationReport
+
+================================================================================
+12. LOGGING & TRACEABILITY
+================================================================================
+
+Each run logs:
+- Timestamp
+- Scenario ID
+- Assumptions hash (for reproducibility)
+- Execution time per engine
+- Validation results
+
+Log format:
+    {
+        "timestamp": "2026-01-15T10:30:00Z",
+        "scenario": "base",
+        "assumptions_hash": "abc123",
+        "engines": {
+            "revenue": {"status": "ok", "time_ms": 50},
+            "cogs": {"status": "ok", "time_ms": 30},
+            ...
+        },
+        "validation": {"passed": true, "warnings": []}
+    }
+
+================================================================================
+END OF FEATURE 07
+================================================================================

@@ -1,0 +1,152 @@
+================================================================================
+FEATURE 02: COGS ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical
+DEPENDENCIES: Revenue Engine (Feature 01)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Translate kg sold (from Revenue Engine) into deterministic COGS using
+Bill of Materials (BOM). No flat EUR/kg allowed.
+
+COGS = f(volume_kg, BOM, input_prices)
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- Variable_COGS[t,p]      : Variable costs per product/month
+- Fixed_COGS[t]           : Fixed production costs per month
+- Fixed_COGS_allocated[t,p]: Fixed costs allocated to products (reporting only)
+- Total_COGS[t]           : Total COGS per month
+- Unit_COGS[t]            : EUR/kg COGS (derived, not input)
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+From Revenue Engine:
+- Units_kg[t,p,m]         : kg sold per month/product/market
+- Units_kg_product[t,p]   : kg sold per month/product
+- Units_kg_total[t]       : Total kg sold per month
+
+BOM Definition:
+- BOM_input_qty[p,i]      : kg of input i required per kg of product p
+- Input_type[i]           : Category (raw_material, additive, energy, etc.)
+
+Input Prices:
+- Input_price[i]          : Base EUR/kg for input i
+- Input_price_ramp[t,i]   : Time-based price adjustment (optional)
+- Input_discount_pct[t,i] : Discounts on inputs (optional)
+
+Fixed COGS:
+- Fixed_COGS_base[t]      : Base fixed production costs
+- Fixed_COGS_ramp[t]      : Ramp factor for scale milestones
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+Step 1: Net Input Price
+    Net_input_price[t,i] = Input_price[i]
+                           * Input_price_ramp[t,i]
+                           * (1 - Input_discount_pct[t,i])
+
+Step 2: Input Consumption
+    Input_consumption_kg[t,p,i] = Units_kg_product[t,p] * BOM_input_qty[p,i]
+
+Step 3: Variable COGS per Input
+    Variable_COGS_input[t,p,i] = Input_consumption_kg[t,p,i]
+                                  * Net_input_price[t,i]
+
+Step 4: Variable COGS per Product
+    Variable_COGS_product[t,p] = SUM_i(Variable_COGS_input[t,p,i])
+
+Step 5: Fixed COGS
+    Fixed_COGS[t] = Fixed_COGS_base[t] * Fixed_COGS_ramp[t]
+
+Step 6: Fixed COGS Allocation (Reporting Only)
+    Fixed_COGS_allocated[t,p] = Fixed_COGS[t]
+                                 * (Units_kg_product[t,p] / Units_kg_total[t])
+
+Step 7: Totals
+    Total_Variable_COGS[t] = SUM_p(Variable_COGS_product[t,p])
+    Total_COGS[t] = Total_Variable_COGS[t] + Fixed_COGS[t]
+
+Step 8: Unit COGS (Derived)
+    Unit_Variable_COGS[t] = Total_Variable_COGS[t] / Units_kg_total[t]
+    Unit_Total_COGS[t] = Total_COGS[t] / Units_kg_total[t]
+
+================================================================================
+5. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- Static EUR/kg COGS (must derive from BOM)
+- COGS = Revenue * margin% (circular)
+- Hardcoded cost per scenario
+
+REQUIRED:
+- BOM completeness: every product has >= 1 input
+- Yield loss explicitly modeled (BOM qty > 1.0 per kg output)
+- Learning curve via input_price_ramp or fixed_cogs_ramp
+
+================================================================================
+6. VALIDATIONS (Fail Loud)
+================================================================================
+
+- BOM_input_qty[p,i] >= 0
+- SUM_i(BOM_input_qty[p,i]) >= 1 (accounts for yield loss)
+- Input_price[i] >= 0
+- Variable_COGS >= 0
+- Fixed_COGS >= 0
+- No division by zero when Units_kg_total = 0
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+7. SCENARIO RULES
+================================================================================
+
+Scenarios may vary:
+- Input_price_ramp[t,i]
+- Input_discount_pct[t,i]
+- Fixed_COGS_ramp[t]
+- Volumes (via Revenue Engine)
+
+Scenarios may NEVER:
+- Change BOM structure
+- Change formulas
+- Hardcode values per scenario
+
+================================================================================
+8. TEST CHECKLIST
+================================================================================
+
+[ ] Zero volume test: Units=0 -> Variable_COGS=0
+[ ] BOM test: 2x Units -> 2x Variable_COGS
+[ ] Price isolation: Vary input price at fixed volumes
+[ ] Excel reconciliation: +/- 0.1% on Total_COGS
+[ ] Margin sanity: Gross Margin coherent with unit economics
+
+================================================================================
+9. INTERFACE CONTRACT
+================================================================================
+
+Input from Revenue Engine:
+    units_kg: Dict[tuple[month, product, market], float]
+
+Output:
+    COGSOutput:
+        variable_cogs: Dict[tuple[month, product], float]
+        fixed_cogs: Dict[month, float]
+        total_cogs: Dict[month, float]
+        unit_cogs: Dict[month, float]
+
+================================================================================
+END OF FEATURE 02
+================================================================================

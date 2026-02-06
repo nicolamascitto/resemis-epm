@@ -1,0 +1,182 @@
+================================================================================
+FEATURE 05: CASHFLOW ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical
+DEPENDENCIES: Revenue (01), COGS (02), OpEx (03), Working Capital (04)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Derive cash position from accrual-based financials plus working capital
+adjustments. Track runway and funding requirements.
+
+Cash != EBITDA
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- EBITDA[t]           : Earnings before interest, taxes, depreciation, amortization
+- Operating_CF[t]     : Operating Cash Flow
+- Free_CF[t]          : Free Cash Flow
+- Financing_CF[t]     : Financing Cash Flow
+- Net_CF[t]           : Net Cash Flow
+- Cash_balance[t]     : Cumulative cash position
+- Runway_months[t]    : Months of cash remaining (if negative FCF)
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+From Previous Engines:
+- Revenue_total[t]    : From Revenue Engine
+- Total_COGS[t]       : From COGS Engine
+- Total_OpEx[t]       : From OpEx Engine
+- Delta_WC[t]         : From Working Capital Engine
+
+Capital Expenditure:
+- Capex_base[t]       : Monthly base capex
+- Capex_milestone[t]  : One-off capital investments
+
+Financing:
+- Equity_raise[t]     : Equity investments received
+- Debt_draw[t]        : Debt drawn
+- Debt_repayment[t]   : Debt repaid
+- Interest_rate       : Annual interest rate on debt
+- Debt_balance[t]     : Outstanding debt balance
+
+Initial Conditions:
+- Cash_balance[0]     : Starting cash position
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+Step 1: EBITDA
+    EBITDA[t] = Revenue_total[t] - Total_COGS[t] - Total_OpEx[t]
+
+Step 2: Operating Cash Flow
+    Operating_CF[t] = EBITDA[t] - Delta_WC[t]
+
+Step 3: Free Cash Flow
+    Free_CF[t] = Operating_CF[t] - Capex_base[t] - Capex_milestone[t]
+
+Step 4: Interest Payment
+    Interest_payment[t] = Debt_balance[t-1] * (Interest_rate / 12)
+
+Step 5: Financing Cash Flow
+    Financing_CF[t] = Equity_raise[t]
+                      + Debt_draw[t]
+                      - Debt_repayment[t]
+                      - Interest_payment[t]
+
+Step 6: Net Cash Flow
+    Net_CF[t] = Free_CF[t] + Financing_CF[t]
+
+Step 7: Cash Balance
+    Cash_balance[t] = Cash_balance[t-1] + Net_CF[t]
+
+Step 8: Debt Balance
+    Debt_balance[t] = Debt_balance[t-1] + Debt_draw[t] - Debt_repayment[t]
+
+Step 9: Runway (if applicable)
+    IF Free_CF[t] < 0:
+        Burn_rate[t] = -Free_CF[t]
+        Runway_months[t] = Cash_balance[t] / Burn_rate[t]
+    ELSE:
+        Runway_months[t] = INFINITY (cash positive)
+
+================================================================================
+5. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- EBITDA = Cash (must adjust for working capital)
+- Ignoring capex timing
+- Missing funding events
+
+REQUIRED:
+- Explicit working capital adjustment
+- Monthly cash balance tracking
+- Funding gap flagging
+
+================================================================================
+6. VALIDATIONS (Fail Loud)
+================================================================================
+
+- EBITDA calculation: Revenue - COGS - OpEx (exact)
+- Cash_balance coherence: t = t-1 + Net_CF
+- Debt_balance coherence: t = t-1 + draws - repayments
+- Interest_rate >= 0
+
+WARNING (not blocking):
+- Cash_balance[t] < 0 -> FLAG FUNDING GAP
+
+BLOCKING ERROR:
+- Division by zero in runway calculation
+- Negative debt_balance
+
+================================================================================
+7. SCENARIO RULES
+================================================================================
+
+Scenarios may vary:
+- Capex timing and amounts
+- Funding timing
+- DSO/DIO/DPO (via Working Capital)
+- Revenue/COGS/OpEx (via upstream engines)
+
+Scenarios may NEVER:
+- Change formulas
+- Skip working capital adjustment
+
+================================================================================
+8. TEST CHECKLIST
+================================================================================
+
+[ ] Zero revenue test: Revenue=0 -> EBITDA = -OpEx
+[ ] WC test: Increase DSO -> Worse Operating_CF
+[ ] Capex shock: One-off capex -> FCF drop
+[ ] Funding test: Equity raise -> Cash increase
+[ ] Excel reconciliation: +/- 0.1% on Cash_balance
+[ ] Runway sanity: Negative FCF with positive cash -> finite runway
+[ ] Scenario invariance: Same formulas, different inputs
+
+================================================================================
+9. FUNDING GAP HANDLING
+================================================================================
+
+If Cash_balance[t] < 0 at any point:
+    1. Flag the month
+    2. Calculate funding required to maintain X months runway
+    3. Do NOT auto-inject funding (that's a scenario input)
+
+Funding gap is INFORMATIONAL, not auto-corrected.
+
+================================================================================
+10. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    ebitda: Dict[month, float]  (or calculate from revenue, cogs, opex)
+    delta_wc: Dict[month, float]
+    capex: CapexSchedule
+    funding: FundingSchedule
+    initial_cash: float
+
+Output:
+    CashflowOutput:
+        ebitda: Dict[month, float]
+        operating_cf: Dict[month, float]
+        free_cf: Dict[month, float]
+        financing_cf: Dict[month, float]
+        net_cf: Dict[month, float]
+        cash_balance: Dict[month, float]
+        funding_gaps: List[month]  # months where cash < 0
+
+================================================================================
+END OF FEATURE 05
+================================================================================

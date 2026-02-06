@@ -1,0 +1,180 @@
+================================================================================
+TASKS: FEATURE 08 - ASSUMPTIONS LAYER
+================================================================================
+
+FEATURE: Assumptions Layer (Foundation)
+TOTAL TASKS: 7
+BLOCKED BY: None (Foundation - must be FIRST)
+PRIORITY: HIGHEST
+
+================================================================================
+TASK 8.1: Create directory structure
+================================================================================
+
+STATUS: [ ] Not Started
+
+DESCRIPTION:
+Create /assumptions directory with placeholder files.
+
+DELIVERABLE:
+/assumptions
+    schema.yaml
+    base.yaml
+    conservative.yaml
+    aggressive.yaml
+
+================================================================================
+TASK 8.2: Define schema.yaml
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.1
+
+DESCRIPTION:
+Define complete schema with all keys, types, and constraints.
+
+SECTIONS:
+- meta
+- time_horizon
+- scenarios
+- products
+- markets
+- volume (tam, sam, som, ramp)
+- pricing (list_price, discounts)
+- bom
+- input_prices
+- opex (fixed, variable)
+- working_capital
+- capex
+- valuation
+- funding
+
+================================================================================
+TASK 8.3: Implement schema validator
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.2
+
+DELIVERABLE:
+```python
+# assumptions/validator.py
+
+def validate_schema(assumptions: Dict, schema: Dict) -> List[ValidationError]:
+    """
+    Validate assumptions against schema.
+    Returns list of errors (empty if valid).
+    """
+    errors = []
+
+    # Type validation
+    for key, expected_type in schema.items():
+        if key not in assumptions:
+            errors.append(MissingKeyError(key))
+        elif not isinstance(assumptions[key], expected_type):
+            errors.append(TypeMismatchError(key, expected_type, type(assumptions[key])))
+
+    # Range validation
+    for key, value in assumptions.items():
+        if is_percentage(key) and not 0 <= value <= 1:
+            errors.append(RangeViolationError(key, value, [0, 1]))
+
+    return errors
+```
+
+================================================================================
+TASK 8.4: Implement YAML loader
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.3
+
+DELIVERABLE:
+```python
+def load_assumptions(path: Path) -> Assumptions:
+    """
+    Load and validate assumptions from YAML.
+    Raises AssumptionValidationError if invalid.
+    """
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+
+    schema = load_schema()
+    errors = validate_schema(raw, schema)
+
+    if errors:
+        raise AssumptionValidationError(errors)
+
+    return Assumptions.from_dict(raw)
+```
+
+================================================================================
+TASK 8.5: Create base.yaml with actual values
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.4, INPUT.txt analysis
+
+DESCRIPTION:
+Populate base.yaml with values from:
+1. BOOK_RESEMIS PDF (costs)
+2. Roadmap documents (timing)
+3. Excel model (baseline logic)
+
+CRITICAL: No invented values. All from source documents.
+
+================================================================================
+TASK 8.6: Create scenario override files
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.5
+
+DESCRIPTION:
+Create conservative.yaml and aggressive.yaml with ONLY overrides.
+
+CONSERVATIVE (downside):
+- Lower SOM penetration
+- Higher input prices
+- Slower ramps
+- Higher discount rates
+
+AGGRESSIVE (upside):
+- Higher SOM penetration
+- Lower input prices
+- Faster ramps
+- Lower discount rates
+
+================================================================================
+TASK 8.7: Add Assumptions Layer tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 8.6
+
+TESTS:
+- [ ] Schema validation catches invalid YAML
+- [ ] Type validation catches wrong types
+- [ ] Range validation catches out-of-bounds
+- [ ] Merge test: overrides apply correctly
+- [ ] Immutability test
+- [ ] Hash test: same file -> same hash
+
+================================================================================
+EXECUTION ORDER (CRITICAL)
+================================================================================
+
+This feature MUST be completed FIRST before any engine implementation.
+
+Order:
+1. Task 8.1 (structure)
+2. Task 8.2 (schema)
+3. Task 8.3 (validator)
+4. Task 8.4 (loader)
+5. Task 8.5 (base values) -- requires source document analysis
+6. Task 8.6 (scenarios)
+7. Task 8.7 (tests)
+
+================================================================================
+END OF TASKS FOR FEATURE 08
+================================================================================

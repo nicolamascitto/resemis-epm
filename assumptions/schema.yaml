@@ -1,0 +1,244 @@
+# =============================================================================
+# RESEMIS EPM ENGINE - ASSUMPTIONS SCHEMA
+# =============================================================================
+# This file defines the STRUCTURE of assumptions (keys, types, constraints).
+# It does NOT contain actual values - those go in base.yaml and scenario files.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# META
+# -----------------------------------------------------------------------------
+meta:
+  project: string          # Project name
+  granularity: monthly     # Fixed: monthly
+  currency: EUR            # Fixed: EUR
+  unit_base: kg            # Fixed: kg
+
+# -----------------------------------------------------------------------------
+# TIME HORIZON
+# -----------------------------------------------------------------------------
+time_horizon:
+  start_month: YYYY-MM     # Format: "2026-01"
+  end_month: YYYY-MM       # Format: "2030-12"
+
+# -----------------------------------------------------------------------------
+# SCENARIOS
+# -----------------------------------------------------------------------------
+scenarios:
+  - scenario_id: string    # base | conservative | aggressive
+    description: string
+
+# -----------------------------------------------------------------------------
+# PRODUCTS
+# -----------------------------------------------------------------------------
+products:
+  - product_id: string     # Unique identifier (e.g., "biocore", "runcover")
+    product_name: string   # Display name
+    unit: kg               # Fixed: kg
+
+# -----------------------------------------------------------------------------
+# MARKETS
+# -----------------------------------------------------------------------------
+markets:
+  - market_id: string           # Unique identifier (e.g., "italy", "eu")
+    geo: string                 # Geography code (e.g., "IT", "EU")
+    activation_month: YYYY-MM   # When market becomes active
+
+# -----------------------------------------------------------------------------
+# VOLUME DRIVERS
+# -----------------------------------------------------------------------------
+volume:
+  # Total Addressable Market (in kg, NOT EUR)
+  tam:
+    per_market_kg:
+      <market_id>: float        # >= 0
+
+  # Serviceable Addressable Market (% of TAM)
+  sam_share:
+    per_market_pct:
+      <market_id>: float        # [0, 1]
+
+  # Serviceable Obtainable Market (% of SAM, time-varying)
+  som_share:
+    per_market_pct:
+      <market_id>: float        # [0, 1] - steady state
+    ramp:
+      by_market:
+        <market_id>:
+          start_month: YYYY-MM
+          duration_months: int   # >= 0, months to reach steady state
+          curve: linear          # linear | s-curve (default: linear)
+
+  # Capacity constraint (optional)
+  capacity:
+    enabled: boolean
+    by_month:
+      <YYYY-MM>: float          # kg, >= 0
+
+# -----------------------------------------------------------------------------
+# PRODUCT MIX
+# -----------------------------------------------------------------------------
+mix:
+  by_market:
+    <market_id>:
+      by_product:
+        <product_id>:
+          by_year:
+            <YYYY>: float       # [0, 1], must sum to 1 per market/year
+
+# -----------------------------------------------------------------------------
+# PRICING
+# -----------------------------------------------------------------------------
+pricing:
+  # List prices (EUR/kg)
+  list_price:
+    by_product:
+      <product_id>:
+        by_month:
+          <YYYY-MM>: float      # >= 0
+
+  # Discounts (scenario-dependent)
+  discounts:
+    by_product:
+      <product_id>:
+        by_market:
+          <market_id>:
+            by_month:
+              <YYYY-MM>: float  # [0, 1]
+
+# -----------------------------------------------------------------------------
+# BILL OF MATERIALS (BOM)
+# -----------------------------------------------------------------------------
+bom:
+  by_product:
+    <product_id>:
+      inputs:
+        - input_id: string
+          input_name: string
+          qty_per_kg: float     # >= 0, sum should be >= 1 for yield loss
+          input_type: string    # raw_material | additive | energy | packaging | labor
+
+# -----------------------------------------------------------------------------
+# INPUT PRICES
+# -----------------------------------------------------------------------------
+input_prices:
+  by_input:
+    <input_id>:
+      base_price: float         # EUR/kg, >= 0
+      by_month:
+        <YYYY-MM>: float        # Override price for specific months
+
+# -----------------------------------------------------------------------------
+# FIXED COGS
+# -----------------------------------------------------------------------------
+fixed_cogs:
+  base_monthly: float           # EUR/month, >= 0
+  ramp:
+    by_month:
+      <YYYY-MM>: float          # Multiplier, >= 0
+
+# -----------------------------------------------------------------------------
+# OPERATING EXPENSES
+# -----------------------------------------------------------------------------
+opex:
+  # Fixed OpEx by category
+  fixed:
+    by_category:
+      management_ga:
+        base_monthly: float     # EUR/month
+        ramp:
+          by_month:
+            <YYYY-MM>: float    # Multiplier
+      it_admin:
+        base_monthly: float
+        ramp:
+          by_month:
+            <YYYY-MM>: float
+      rd_base:
+        base_monthly: float
+        ramp:
+          by_month:
+            <YYYY-MM>: float
+      legal_compliance:
+        base_monthly: float
+        ramp:
+          by_month:
+            <YYYY-MM>: float
+
+  # Variable OpEx by driver
+  variable:
+    by_driver:
+      <driver_id>:
+        cost_per_unit: float    # EUR per unit of activity
+
+  # Sales & Marketing (special case)
+  sales_marketing:
+    fixed_base: float           # EUR/month
+    ramp:
+      by_month:
+        <YYYY-MM>: float        # Multiplier
+    cac:
+      by_market:
+        <market_id>: float      # EUR per market activation
+
+# -----------------------------------------------------------------------------
+# WORKING CAPITAL
+# -----------------------------------------------------------------------------
+working_capital:
+  dso_days: int                 # Days Sales Outstanding, >= 0
+  dio_days: int                 # Days Inventory Outstanding, >= 0
+  dpo_days: int                 # Days Payables Outstanding, >= 0
+
+# -----------------------------------------------------------------------------
+# CAPITAL EXPENDITURE
+# -----------------------------------------------------------------------------
+capex:
+  base_monthly: float           # EUR/month recurring
+  milestones:
+    by_month:
+      <YYYY-MM>: float          # EUR one-off investments
+
+# -----------------------------------------------------------------------------
+# FUNDING
+# -----------------------------------------------------------------------------
+funding:
+  initial_cash: float           # Starting cash balance
+
+  equity:
+    by_month:
+      <YYYY-MM>: float          # Equity raises
+
+  debt:
+    interest_rate: float        # Annual rate [0, 1]
+    by_month:
+      <YYYY-MM>:
+        draw: float             # Debt drawn
+        repayment: float        # Debt repaid
+
+# -----------------------------------------------------------------------------
+# VALUATION PARAMETERS
+# -----------------------------------------------------------------------------
+valuation:
+  discount_rate: float          # WACC or hurdle, > terminal_growth_rate
+  terminal_growth_rate: float   # Long-term growth
+  terminal_method: string       # gordon | multiple
+  terminal_multiple: float      # EBITDA multiple (if method = multiple)
+  exit_year: int                # Expected exit year
+
+  equity:
+    ownership_pct: float        # Investor ownership [0, 1]
+    invested:
+      by_month:
+        <YYYY-MM>: float        # Equity investments for IRR calc
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+# 1. All percentages in [0, 1]
+# 2. All EUR values >= 0
+# 3. SUM(mix) = 1 for each market/year
+# 4. SUM(BOM qty_per_kg) >= 1 (yield loss)
+# 5. discount_rate > terminal_growth_rate
+# 6. start_month < end_month
+# 7. activation_month >= start_month
+# =============================================================================

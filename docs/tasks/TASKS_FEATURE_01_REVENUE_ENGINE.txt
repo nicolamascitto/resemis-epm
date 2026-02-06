@@ -1,0 +1,288 @@
+================================================================================
+TASKS: FEATURE 01 - REVENUE ENGINE
+================================================================================
+
+FEATURE: Revenue Engine
+TOTAL TASKS: 8
+ESTIMATED COMPLEXITY: High
+
+================================================================================
+TASK 1.1: Create volume.py module structure
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 08 (Assumptions Layer)
+
+DESCRIPTION:
+Create the volume.py module with function signatures and docstrings.
+No implementation yet, just structure.
+
+ACCEPTANCE CRITERIA:
+- [ ] File created at /models/volume.py
+- [ ] Function signatures defined
+- [ ] Type hints added
+- [ ] Docstrings with formulas
+
+DELIVERABLE:
+```python
+# models/volume.py
+
+def calculate_addressable_kg(
+    tam_kg: Dict[str, float],
+    sam_pct: Dict[str, float],
+    som_pct: Dict[Tuple[str, str], float],  # (month, market)
+) -> Dict[Tuple[str, str], float]:
+    """
+    Calculate addressable kg per market per month.
+
+    Formula: Addressable_kg[t,m] = TAM_kg[m] * SAM_pct[m] * SOM_pct[t,m]
+
+    Returns: Dict[(month, market), kg]
+    """
+    pass
+
+def calculate_potential_kg(
+    addressable_kg: Dict[Tuple[str, str], float]
+) -> Dict[str, float]:
+    """
+    Sum addressable kg across markets.
+
+    Formula: Potential_kg[t] = SUM_m(Addressable_kg[t,m])
+
+    Returns: Dict[month, kg]
+    """
+    pass
+
+def apply_capacity_constraint(
+    potential_kg: Dict[str, float],
+    capacity_kg: Optional[Dict[str, float]]
+) -> Dict[str, float]:
+    """
+    Apply capacity constraint if defined.
+
+    Formula: Sellable_kg[t] = MIN(Potential_kg[t], Capacity_kg[t])
+
+    Returns: Dict[month, kg]
+    """
+    pass
+```
+
+================================================================================
+TASK 1.2: Implement addressable demand calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 1.1
+
+DESCRIPTION:
+Implement the calculate_addressable_kg function.
+
+ACCEPTANCE CRITERIA:
+- [ ] Formula implemented correctly
+- [ ] Market activation date respected (SOM=0 before activation)
+- [ ] Returns correct structure
+- [ ] Unit test passes
+
+TEST:
+```python
+def test_addressable_kg():
+    tam = {"italy": 1000}
+    sam = {"italy": 0.25}
+    som = {("2026-06", "italy"): 0.10}
+    result = calculate_addressable_kg(tam, sam, som)
+    assert result[("2026-06", "italy")] == 25  # 1000 * 0.25 * 0.10
+```
+
+================================================================================
+TASK 1.3: Implement capacity constraint
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 1.2
+
+DESCRIPTION:
+Implement apply_capacity_constraint function.
+
+ACCEPTANCE CRITERIA:
+- [ ] Returns potential_kg if no capacity defined
+- [ ] Returns min(potential, capacity) if capacity defined
+- [ ] Handles edge cases (zero capacity)
+
+TEST:
+```python
+def test_capacity_constraint():
+    potential = {"2026-06": 100}
+    capacity = {"2026-06": 80}
+    result = apply_capacity_constraint(potential, capacity)
+    assert result["2026-06"] == 80
+
+def test_no_capacity():
+    potential = {"2026-06": 100}
+    result = apply_capacity_constraint(potential, None)
+    assert result["2026-06"] == 100
+```
+
+================================================================================
+TASK 1.4: Create pricing.py module
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 08 (Assumptions Layer)
+
+DESCRIPTION:
+Create pricing module with net price calculation.
+
+DELIVERABLE:
+```python
+# models/pricing.py
+
+def calculate_net_price(
+    list_price: Dict[str, float],  # by product
+    price_ramp: Dict[Tuple[str, str], float],  # (month, product)
+    discount_pct: Dict[Tuple[str, str, str], float]  # (month, product, market)
+) -> Dict[Tuple[str, str, str], float]:
+    """
+    Calculate net price per product/market/month.
+
+    Formula: Net_price[t,p,m] = List_price[p] * Ramp[t,p] * (1 - Discount[t,p,m])
+
+    Returns: Dict[(month, product, market), EUR/kg]
+    """
+    pass
+```
+
+ACCEPTANCE CRITERIA:
+- [ ] Discount applied correctly (1 - discount)
+- [ ] Ramp factor multiplied
+- [ ] All dimensions handled
+
+================================================================================
+TASK 1.5: Implement product mix allocation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 1.3
+
+DESCRIPTION:
+Implement allocation of total kg to products and markets.
+
+FORMULA:
+Units_kg[t,p,m] = Sellable_kg[t] * Mix_pct[t,p,m]
+                  * (Addressable_kg[t,m] / SUM_m(Addressable_kg[t,m]))
+
+ACCEPTANCE CRITERIA:
+- [ ] Mix percentages sum to 1
+- [ ] Market weight applied correctly
+- [ ] Output structure correct
+
+================================================================================
+TASK 1.6: Create revenue.py main module
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 1.4, 1.5
+
+DESCRIPTION:
+Create main revenue engine that combines volume and pricing.
+
+DELIVERABLE:
+```python
+# models/revenue.py
+
+from .volume import calculate_addressable_kg, calculate_potential_kg, apply_capacity_constraint
+from .pricing import calculate_net_price
+
+def revenue_engine(assumptions: Assumptions) -> RevenueOutput:
+    """
+    Main revenue engine.
+
+    Execution order:
+    1. Market activation -> SOM_pct
+    2. Addressable demand
+    3. Potential demand
+    4. Capacity (if present)
+    5. Allocation (mix)
+    6. Pricing
+    7. Revenue
+    8. Aggregation
+    """
+    pass
+
+@dataclass
+class RevenueOutput:
+    units_kg: Dict[Tuple[str, str, str], float]  # (month, product, market)
+    revenue: Dict[Tuple[str, str, str], float]
+    revenue_total: Dict[str, float]
+    revenue_by_product: Dict[Tuple[str, str], float]
+    revenue_by_market: Dict[Tuple[str, str], float]
+```
+
+================================================================================
+TASK 1.7: Implement revenue calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 1.6
+
+DESCRIPTION:
+Implement the revenue calculation and aggregation.
+
+FORMULA:
+Revenue[t,p,m] = Units_kg[t,p,m] * Net_price[t,p,m]
+
+AGGREGATIONS:
+Revenue_product[t,p] = SUM_m(Revenue[t,p,m])
+Revenue_market[t,m] = SUM_p(Revenue[t,p,m])
+Revenue_total[t] = SUM_p(SUM_m(Revenue[t,p,m]))
+
+ACCEPTANCE CRITERIA:
+- [ ] Revenue calculated correctly
+- [ ] All aggregations correct
+- [ ] No rounding errors
+
+================================================================================
+TASK 1.8: Add validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 1.7
+
+DESCRIPTION:
+Add all validations and unit tests for revenue engine.
+
+VALIDATIONS:
+- SAM_pct, SOM_pct, Discount_pct in [0,1]
+- Price_ramp_factor > 0
+- SUM_p(mix) = 1 for all t,m
+- Units_kg >= 0
+- Revenue >= 0
+
+TESTS:
+- [ ] Zero test: SOM=0 -> Revenue=0
+- [ ] Ramp test: Increase SOM -> kg increases
+- [ ] Price isolation: Vary price at fixed volumes
+- [ ] Mix validation: Sum to 1
+
+================================================================================
+DEPENDENCY GRAPH
+================================================================================
+
+Task 1.1 (structure)
+    |
+    v
+Task 1.2 (addressable) --> Task 1.3 (capacity) --> Task 1.5 (mix)
+                                                        |
+Task 1.4 (pricing) ----------------------------------------+
+                                                           |
+                                                           v
+                                                      Task 1.6 (main)
+                                                           |
+                                                           v
+                                                      Task 1.7 (revenue)
+                                                           |
+                                                           v
+                                                      Task 1.8 (validation)
+
+================================================================================
+END OF TASKS FOR FEATURE 01
+================================================================================

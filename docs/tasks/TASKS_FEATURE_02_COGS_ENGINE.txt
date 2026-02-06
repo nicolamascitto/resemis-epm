@@ -1,0 +1,211 @@
+================================================================================
+TASKS: FEATURE 02 - COGS ENGINE
+================================================================================
+
+FEATURE: COGS Engine (BOM-driven)
+TOTAL TASKS: 7
+BLOCKED BY: Feature 01 (Revenue Engine), Feature 08 (Assumptions Layer)
+
+================================================================================
+TASK 2.1: Create BOM data structure
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 08
+
+DESCRIPTION:
+Define BOM (Bill of Materials) data structure and loading.
+
+DELIVERABLE:
+```python
+# models/bom.py
+
+@dataclass
+class BOMInput:
+    input_id: str
+    qty_per_kg: float  # kg input per kg output
+
+@dataclass
+class ProductBOM:
+    product_id: str
+    inputs: List[BOMInput]
+
+def load_bom(assumptions: Assumptions) -> Dict[str, ProductBOM]:
+    """Load BOM definitions from assumptions."""
+    pass
+
+def validate_bom(bom: Dict[str, ProductBOM]) -> None:
+    """
+    Validate BOM completeness.
+    - Every product has >= 1 input
+    - SUM(qty_per_kg) >= 1 (yield loss)
+    """
+    pass
+```
+
+ACCEPTANCE CRITERIA:
+- [ ] BOM structure defined
+- [ ] Loader implemented
+- [ ] Validation checks yield loss
+
+================================================================================
+TASK 2.2: Implement input price calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 2.1
+
+DESCRIPTION:
+Calculate net input prices with ramps and discounts.
+
+FORMULA:
+Net_input_price[t,i] = Input_price[i] * Ramp[t,i] * (1 - Discount[t,i])
+
+DELIVERABLE:
+```python
+def calculate_net_input_price(
+    base_price: Dict[str, float],  # by input_id
+    price_ramp: Dict[Tuple[str, str], float],  # (month, input_id)
+    discount_pct: Dict[Tuple[str, str], float]  # (month, input_id)
+) -> Dict[Tuple[str, str], float]:
+    """
+    Calculate net input prices.
+    Returns: Dict[(month, input_id), EUR/kg]
+    """
+    pass
+```
+
+================================================================================
+TASK 2.3: Implement input consumption calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 2.2, Feature 01
+
+DESCRIPTION:
+Calculate kg of each input consumed based on BOM and volume.
+
+FORMULA:
+Input_consumption_kg[t,p,i] = Units_kg_product[t,p] * BOM_input_qty[p,i]
+
+ACCEPTANCE CRITERIA:
+- [ ] Consumption proportional to output volume
+- [ ] BOM quantities applied correctly
+- [ ] Yield loss reflected
+
+================================================================================
+TASK 2.4: Implement variable COGS calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 2.3
+
+DESCRIPTION:
+Calculate variable COGS from input consumption and prices.
+
+FORMULA:
+Variable_COGS_input[t,p,i] = Input_consumption_kg[t,p,i] * Net_input_price[t,i]
+Variable_COGS_product[t,p] = SUM_i(Variable_COGS_input[t,p,i])
+Total_Variable_COGS[t] = SUM_p(Variable_COGS_product[t,p])
+
+================================================================================
+TASK 2.5: Implement fixed COGS calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 08
+
+DESCRIPTION:
+Calculate fixed COGS with ramp factors.
+
+FORMULA:
+Fixed_COGS[t] = Fixed_COGS_base[t] * Fixed_COGS_ramp[t]
+
+ALLOCATION (reporting only):
+Fixed_COGS_allocated[t,p] = Fixed_COGS[t] * (Units_kg_product[t,p] / Units_kg_total[t])
+
+================================================================================
+TASK 2.6: Create main COGS engine
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 2.4, 2.5
+
+DESCRIPTION:
+Create main cogs_engine function combining all components.
+
+DELIVERABLE:
+```python
+# models/cogs.py
+
+def cogs_engine(
+    units_kg: Dict[Tuple[str, str, str], float],  # from revenue engine
+    bom: Dict[str, ProductBOM],
+    input_prices: Dict[Tuple[str, str], float],
+    fixed_cogs_params: FixedCOGSParams
+) -> COGSOutput:
+    """
+    Main COGS engine.
+
+    Returns:
+        variable_cogs: by product/month
+        fixed_cogs: by month
+        total_cogs: by month
+        unit_cogs: EUR/kg by month (derived)
+    """
+    pass
+
+@dataclass
+class COGSOutput:
+    variable_cogs_product: Dict[Tuple[str, str], float]
+    fixed_cogs: Dict[str, float]
+    fixed_cogs_allocated: Dict[Tuple[str, str], float]
+    total_cogs: Dict[str, float]
+    unit_variable_cogs: Dict[str, float]
+    unit_total_cogs: Dict[str, float]
+```
+
+================================================================================
+TASK 2.7: Add COGS validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 2.6
+
+DESCRIPTION:
+Add all validations and unit tests.
+
+VALIDATIONS:
+- BOM_input_qty >= 0
+- SUM(BOM_input_qty) >= 1 (yield)
+- Input_price >= 0
+- Variable_COGS >= 0
+- Fixed_COGS >= 0
+- No division by zero
+
+TESTS:
+- [ ] Zero volume test: Units=0 -> Variable_COGS=0
+- [ ] BOM test: 2x Units -> 2x Variable_COGS
+- [ ] Price isolation test
+- [ ] No flat COGS check
+
+================================================================================
+DEPENDENCY GRAPH
+================================================================================
+
+Feature 08 -----> Task 2.1 (BOM) --> Task 2.2 (input price)
+                        |                   |
+                        v                   v
+Feature 01 ---------> Task 2.3 (consumption) --> Task 2.4 (variable COGS)
+                                                        |
+Feature 08 -----> Task 2.5 (fixed COGS) ----------------+
+                                                        |
+                                                        v
+                                                   Task 2.6 (main)
+                                                        |
+                                                        v
+                                                   Task 2.7 (validation)
+
+================================================================================
+END OF TASKS FOR FEATURE 02
+================================================================================

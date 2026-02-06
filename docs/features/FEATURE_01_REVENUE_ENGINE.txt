@@ -1,0 +1,152 @@
+================================================================================
+FEATURE 01: REVENUE ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical (Foundation)
+DEPENDENCIES: Assumptions Layer (Feature 08)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Calculate revenue from physical units (kg) through a deterministic pipeline:
+TAM -> SAM -> SOM -> Units -> Price -> Revenue
+
+Revenue must always be derived, never hardcoded.
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- Units_kg[t,p,m] : kg sold per month, product, market
+- Revenue[t,p,m]  : EUR revenue per month, product, market
+- Revenue_total[t]: Total EUR revenue per month
+
+================================================================================
+3. INPUT REQUIRED (Minimal & Sufficient)
+================================================================================
+
+Market Demand:
+- TAM_kg[m]                    : Total Addressable Market in kg per market
+- SAM_pct[m]                   : Serviceable Addressable Market %
+- SOM_pct[t,m]                 : Serviceable Obtainable Market % (ramped)
+- Market_activation_date[m]   : When market becomes active
+
+Product Mix:
+- Product_mix_pct[t,p,m]      : % allocation per product/market/time
+- Constraint: Sum of mix = 100% for each t,m
+
+Pricing:
+- List_price[p]               : EUR/kg per product
+- Price_ramp_factor[t,p]      : Time-based price adjustment
+- Discount_pct[t,p,m]         : Discounts per product/market/time
+
+Capacity (Optional):
+- Capacity_kg[t]              : Maximum sellable kg per month
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+Step 1: Addressable Demand
+    Addressable_kg[t,m] = TAM_kg[m] * SAM_pct[m] * SOM_pct[t,m]
+
+Step 2: Potential Demand
+    Potential_kg[t] = SUM_m(Addressable_kg[t,m])
+
+Step 3: Capacity Constraint
+    IF Capacity_kg[t] defined:
+        Sellable_kg[t] = MIN(Potential_kg[t], Capacity_kg[t])
+    ELSE:
+        Sellable_kg[t] = Potential_kg[t]
+
+Step 4: Product Allocation
+    Units_kg[t,p,m] = Sellable_kg[t] * Product_mix_pct[t,p,m]
+                      * (Addressable_kg[t,m] / SUM_m(Addressable_kg[t,m]))
+
+Step 5: Net Price
+    Net_price[t,p,m] = List_price[p] * Price_ramp_factor[t,p]
+                       * (1 - Discount_pct[t,p,m])
+
+Step 6: Revenue
+    Revenue[t,p,m] = Units_kg[t,p,m] * Net_price[t,p,m]
+
+Step 7: Aggregation
+    Revenue_product[t,p] = SUM_m(Revenue[t,p,m])
+    Revenue_market[t,m]  = SUM_p(Revenue[t,p,m])
+    Revenue_total[t]     = SUM_p(SUM_m(Revenue[t,p,m]))
+
+================================================================================
+5. EXECUTION ORDER (Strict)
+================================================================================
+
+1. Market activation -> SOM_pct
+2. Addressable demand
+3. Potential demand
+4. Capacity (if present)
+5. Allocation (mix)
+6. Pricing
+7. Revenue
+8. Aggregation
+
+================================================================================
+6. VALIDATIONS (Fail Loud)
+================================================================================
+
+Units:
+- All volumes in kg
+- Prices in EUR/kg
+- Revenue in EUR
+
+Boundaries:
+- SAM_pct, SOM_pct, Discount_pct in [0,1]
+- Price_ramp_factor > 0
+
+Consistency:
+- SUM_p(mix) = 1 for all t,m
+- Units_kg >= 0
+- Revenue >= 0
+
+Capacity:
+- If defined: Sellable_kg <= Capacity_kg
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+7. SCENARIO RULES
+================================================================================
+
+Scenarios may vary:
+- SOM_pct
+- Price_ramp_factor
+- Discount_pct
+- Capacity_kg (if defined)
+
+Scenarios may NEVER:
+- Change formulas
+- Branch logic based on scenario name
+
+================================================================================
+8. TEST CHECKLIST
+================================================================================
+
+[ ] Zero test: SOM=0 -> Revenue=0
+[ ] Ramp test: Increase SOM -> kg increases before EUR
+[ ] Price isolation: Vary price at fixed volumes
+[ ] Excel reconciliation: +/- 0.1% on Revenue_total[t]
+[ ] Scenario invariance: Same formulas, different inputs
+
+================================================================================
+9. KNOWN EXCEL ISSUES TO CORRECT
+================================================================================
+
+- TAM expressed in EUR instead of kg
+- Ramp applied to EUR instead of volumes
+- Average price hardcoded
+- No capacity constraint
+- Static mix
+
+================================================================================
+END OF FEATURE 01
+================================================================================

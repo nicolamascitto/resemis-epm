@@ -1,0 +1,123 @@
+================================================================================
+TASKS: FEATURE 03 - OPEX ENGINE
+================================================================================
+
+FEATURE: OpEx Engine (Activity-Linked)
+TOTAL TASKS: 6
+BLOCKED BY: Feature 01 (for activity drivers), Feature 08
+
+================================================================================
+TASK 3.1: Define OpEx categories and structure
+================================================================================
+
+STATUS: [ ] Not Started
+
+DESCRIPTION:
+Define fixed and variable OpEx categories.
+
+CATEGORIES:
+Fixed: management_ga, it_admin, rd_base, legal_compliance
+Variable: linked to activity drivers (kg, markets, customers)
+
+DELIVERABLE:
+```python
+# models/opex.py
+
+@dataclass
+class FixedOpExCategory:
+    category_id: str
+    base_monthly: float
+    ramp_factors: Dict[str, float]  # by month
+
+@dataclass
+class VariableOpExDriver:
+    driver_id: str
+    cost_per_unit: float
+```
+
+================================================================================
+TASK 3.2: Implement fixed OpEx calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 3.1
+
+FORMULA:
+Fixed_OpEx[t,c] = Fixed_OpEx_base[c] * Fixed_OpEx_ramp[t,c]
+Total_Fixed_OpEx[t] = SUM_c(Fixed_OpEx[t,c])
+
+================================================================================
+TASK 3.3: Implement activity driver extraction
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Feature 01
+
+DESCRIPTION:
+Extract activity driver values from revenue output.
+
+DRIVERS:
+- units_kg_total[t]: from Revenue Engine
+- active_markets[t]: count of markets with revenue > 0
+- new_markets_activated[t]: markets activated in month t
+
+================================================================================
+TASK 3.4: Implement variable OpEx calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 3.3
+
+FORMULA:
+Variable_OpEx[t,a] = Activity_driver_value[t,a] * OpEx_per_unit[a]
+
+S&M SPECIAL:
+SM_OpEx[t] = SM_fixed_base * SM_ramp[t] + SUM_m(New_markets[t,m] * CAC[m])
+
+================================================================================
+TASK 3.5: Create main OpEx engine
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 3.2, 3.4
+
+DELIVERABLE:
+```python
+def opex_engine(
+    activity_drivers: Dict[Tuple[str, str], float],
+    fixed_opex_params: List[FixedOpExCategory],
+    variable_opex_params: List[VariableOpExDriver],
+    sm_params: SMParams
+) -> OpExOutput:
+    pass
+
+@dataclass
+class OpExOutput:
+    fixed_opex: Dict[Tuple[str, str], float]  # (month, category)
+    variable_opex: Dict[Tuple[str, str], float]  # (month, driver)
+    sm_opex: Dict[str, float]
+    total_fixed: Dict[str, float]
+    total_variable: Dict[str, float]
+    total_opex: Dict[str, float]
+```
+
+================================================================================
+TASK 3.6: Add OpEx validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 3.5
+
+VALIDATIONS:
+- All costs >= 0
+- Ramp factors >= 0
+- OpEx NOT dependent on EUR revenue
+
+TESTS:
+- [ ] Zero activity -> Only fixed OpEx
+- [ ] Ramp test
+- [ ] Activity isolation
+
+================================================================================
+END OF TASKS FOR FEATURE 03
+================================================================================

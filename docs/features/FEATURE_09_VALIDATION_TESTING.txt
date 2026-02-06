@@ -1,0 +1,356 @@
+================================================================================
+FEATURE 09: VALIDATION & TESTING
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical (Quality Assurance)
+DEPENDENCIES: All Features (01-08)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Ensure the EPM engine is:
+- Correct: Matches Excel within +/- 0.1%
+- Deterministic: Same inputs -> Same outputs
+- Robust: Fails loudly on invalid inputs
+- Auditable: Every number traceable to source
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- Unit test results per module
+- Integration test results
+- Excel reconciliation reports
+- Validation error logs
+- Coverage metrics
+
+================================================================================
+3. TEST CATEGORIES
+================================================================================
+
+A. Unit Tests (per engine)
+    - Test individual functions
+    - Isolated, no dependencies
+    - Fast execution
+
+B. Integration Tests
+    - Test engine interactions
+    - Full pipeline execution
+    - Scenario-based
+
+C. Reconciliation Tests
+    - Compare to Excel baseline
+    - Tolerance: +/- 0.1%
+    - Document discrepancies
+
+D. Regression Tests
+    - Snapshot comparisons
+    - Detect unintended changes
+    - Version-controlled baselines
+
+================================================================================
+4. UNIT TEST SPECIFICATIONS
+================================================================================
+
+--- REVENUE ENGINE TESTS ---
+
+test_zero_som_zero_revenue():
+    # SOM = 0 should produce zero revenue
+    assumptions = create_assumptions(som_pct=0)
+    result = revenue_engine(assumptions)
+    assert result.revenue_total == 0
+
+test_ramp_increases_volume_first():
+    # Increasing SOM should increase kg before EUR
+    assumptions_low = create_assumptions(som_pct=0.1)
+    assumptions_high = create_assumptions(som_pct=0.2)
+    result_low = revenue_engine(assumptions_low)
+    result_high = revenue_engine(assumptions_high)
+    assert result_high.units_kg > result_low.units_kg
+
+test_price_isolation():
+    # Changing price at fixed volumes changes revenue proportionally
+    assumptions_1 = create_assumptions(list_price=3.0)
+    assumptions_2 = create_assumptions(list_price=6.0)
+    result_1 = revenue_engine(assumptions_1)
+    result_2 = revenue_engine(assumptions_2)
+    assert result_2.revenue_total == result_1.revenue_total * 2
+
+test_capacity_constraint():
+    # Capacity should cap volumes
+    assumptions = create_assumptions(capacity_kg=100, potential_kg=200)
+    result = revenue_engine(assumptions)
+    assert result.units_kg_total <= 100
+
+--- COGS ENGINE TESTS ---
+
+test_zero_volume_zero_variable_cogs():
+    # Zero volume should produce zero variable COGS
+    result = cogs_engine(units_kg=0, bom=..., prices=...)
+    assert result.variable_cogs == 0
+
+test_bom_linearity():
+    # Double volume should double variable COGS
+    result_1 = cogs_engine(units_kg=100, ...)
+    result_2 = cogs_engine(units_kg=200, ...)
+    assert result_2.variable_cogs == result_1.variable_cogs * 2
+
+test_no_flat_cogs():
+    # COGS should NOT be a flat EUR/kg
+    # Must derive from BOM components
+    result = cogs_engine(...)
+    assert result.variable_cogs == sum(bom_component_costs)
+
+--- OPEX ENGINE TESTS ---
+
+test_zero_activity_only_fixed():
+    # Zero activity drivers should produce only fixed OpEx
+    result = opex_engine(activity_drivers={}, ramps=...)
+    assert result.variable_opex == 0
+    assert result.fixed_opex > 0
+
+test_ramp_increases_opex():
+    # Higher ramp factors should increase fixed OpEx
+    result_1 = opex_engine(ramp_factor=1.0)
+    result_2 = opex_engine(ramp_factor=2.0)
+    assert result_2.fixed_opex > result_1.fixed_opex
+
+--- WORKING CAPITAL TESTS ---
+
+test_zero_revenue_zero_ar():
+    # Zero revenue should produce zero AR
+    result = working_capital_engine(revenue=0, cogs=0, ...)
+    assert result.ar == 0
+
+test_higher_dso_worse_cash():
+    # Higher DSO should increase AR, consuming cash
+    result_30 = working_capital_engine(dso_days=30, ...)
+    result_60 = working_capital_engine(dso_days=60, ...)
+    assert result_60.ar > result_30.ar
+
+--- CASHFLOW TESTS ---
+
+test_ebitda_calculation():
+    # EBITDA = Revenue - COGS - OpEx
+    result = cashflow_engine(revenue=100, cogs=40, opex=30, ...)
+    assert result.ebitda == 30
+
+test_wc_adjustment():
+    # Operating CF = EBITDA - Delta_WC
+    result = cashflow_engine(ebitda=100, delta_wc=20, ...)
+    assert result.operating_cf == 80
+
+test_capex_reduces_fcf():
+    # Capex reduces FCF
+    result = cashflow_engine(operating_cf=100, capex=30, ...)
+    assert result.free_cf == 70
+
+--- VALUATION TESTS ---
+
+test_zero_fcf_zero_ev():
+    # Zero FCF should produce zero EV
+    result = valuation_engine(free_cf=[0]*60, ...)
+    assert result.enterprise_value == 0
+
+test_higher_discount_lower_ev():
+    # Higher discount rate should reduce EV
+    result_8 = valuation_engine(discount_rate=0.08, ...)
+    result_12 = valuation_engine(discount_rate=0.12, ...)
+    assert result_12.enterprise_value < result_8.enterprise_value
+
+test_irr_exists():
+    # IRR should be calculable when CF changes sign
+    result = valuation_engine(equity_invested=[100], proceeds=[200], ...)
+    assert result.irr is not None
+    assert result.irr > 0
+
+================================================================================
+5. INTEGRATION TEST SPECIFICATIONS
+================================================================================
+
+test_full_pipeline_base_scenario():
+    # Run full pipeline for base scenario
+    results = run_scenario("base")
+    assert results.revenue is not None
+    assert results.cogs is not None
+    assert results.opex is not None
+    assert results.cashflow is not None
+    assert results.valuation is not None
+
+test_scenario_ordering():
+    # Conservative <= Base <= Aggressive
+    base = run_scenario("base")
+    cons = run_scenario("conservative")
+    agg = run_scenario("aggressive")
+
+    assert cons.valuation.irr <= base.valuation.irr
+    assert base.valuation.irr <= agg.valuation.irr
+
+    assert cons.revenue_total[-1] <= base.revenue_total[-1]
+    assert base.revenue_total[-1] <= agg.revenue_total[-1]
+
+test_determinism():
+    # Same inputs produce same outputs
+    result_1 = run_scenario("base")
+    result_2 = run_scenario("base")
+    assert result_1 == result_2
+
+================================================================================
+6. EXCEL RECONCILIATION
+================================================================================
+
+Tolerance: +/- 0.1% on all metrics
+
+reconciliation_metrics = [
+    "revenue_total",
+    "total_cogs",
+    "total_opex",
+    "ebitda",
+    "free_cf",
+    "cash_balance",
+    "irr",
+    "moic"
+]
+
+def reconcile_with_excel(engine_results, excel_data):
+    discrepancies = []
+    for metric in reconciliation_metrics:
+        engine_value = engine_results[metric]
+        excel_value = excel_data[metric]
+        variance_pct = abs(engine_value - excel_value) / abs(excel_value)
+        if variance_pct > 0.001:  # 0.1%
+            discrepancies.append({
+                "metric": metric,
+                "engine": engine_value,
+                "excel": excel_value,
+                "variance_pct": variance_pct
+            })
+    return discrepancies
+
+================================================================================
+7. VALIDATION FUNCTIONS
+================================================================================
+
+--- Assumption Validation ---
+
+def validate_assumptions(assumptions):
+    errors = []
+
+    # Type checks
+    if not isinstance(assumptions.time_horizon.start_month, str):
+        errors.append("start_month must be string YYYY-MM")
+
+    # Range checks
+    for market in assumptions.markets:
+        if not 0 <= assumptions.volume.sam_share[market] <= 1:
+            errors.append(f"SAM share for {market} out of range")
+
+    # Consistency checks
+    if assumptions.valuation.discount_rate <= assumptions.valuation.terminal_growth_rate:
+        errors.append("discount_rate must be > terminal_growth_rate")
+
+    if errors:
+        raise ValidationError(errors)
+
+--- Output Validation ---
+
+def validate_outputs(results):
+    errors = []
+
+    # Non-negativity
+    for t, revenue in results.revenue_total.items():
+        if revenue < 0:
+            errors.append(f"Negative revenue at {t}")
+
+    # Coherence
+    for t in results.time_range:
+        expected_ebitda = results.revenue[t] - results.cogs[t] - results.opex[t]
+        if abs(results.ebitda[t] - expected_ebitda) > 0.01:
+            errors.append(f"EBITDA mismatch at {t}")
+
+    if errors:
+        raise ValidationError(errors)
+
+================================================================================
+8. ERROR TYPES
+================================================================================
+
+ValidationError:
+    - Invalid assumptions
+    - Out-of-range values
+    - Missing required fields
+
+CalculationError:
+    - Division by zero
+    - Negative values where not allowed
+    - Inconsistent results
+
+ReconciliationError:
+    - Variance > 0.1% from Excel
+    - Missing Excel data
+    - Format mismatch
+
+ScenarioError:
+    - Ordering violation (conservative > base)
+    - Missing scenario
+    - Scenario-specific logic detected
+
+================================================================================
+9. TEST DIRECTORY STRUCTURE
+================================================================================
+
+/tests
+    /unit
+        test_revenue.py
+        test_cogs.py
+        test_opex.py
+        test_working_capital.py
+        test_cashflow.py
+        test_valuation.py
+        test_assumptions.py
+    /integration
+        test_pipeline.py
+        test_scenarios.py
+    /reconciliation
+        test_excel_match.py
+        excel_baseline.csv
+    /fixtures
+        base_assumptions.yaml
+        test_bom.yaml
+    conftest.py
+    pytest.ini
+
+================================================================================
+10. TEST CHECKLIST (Definition of Done)
+================================================================================
+
+Unit Tests:
+[ ] All zero tests pass
+[ ] All linearity tests pass
+[ ] All boundary tests pass
+[ ] All isolation tests pass
+
+Integration Tests:
+[ ] Full pipeline completes without error
+[ ] Scenario ordering verified
+[ ] Determinism verified
+
+Reconciliation:
+[ ] Revenue within +/- 0.1%
+[ ] COGS within +/- 0.1%
+[ ] OpEx within +/- 0.1%
+[ ] EBITDA within +/- 0.1%
+[ ] FCF within +/- 0.1%
+[ ] Cash balance within +/- 0.1%
+[ ] IRR within +/- 0.1%
+
+Coverage:
+[ ] >90% line coverage
+[ ] All public functions tested
+[ ] All error paths tested
+
+================================================================================
+END OF FEATURE 09
+================================================================================

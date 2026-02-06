@@ -1,0 +1,99 @@
+================================================================================
+TASKS: FEATURE 04 - WORKING CAPITAL ENGINE
+================================================================================
+
+FEATURE: Working Capital Engine
+TOTAL TASKS: 5
+BLOCKED BY: Features 01 (Revenue), 02 (COGS)
+
+================================================================================
+TASK 4.1: Define working capital parameters
+================================================================================
+
+STATUS: [ ] Not Started
+
+DELIVERABLE:
+```python
+# models/working_capital.py
+
+@dataclass
+class WCTerms:
+    dso_days: int  # Days Sales Outstanding
+    dio_days: int  # Days Inventory Outstanding
+    dpo_days: int  # Days Payables Outstanding
+```
+
+================================================================================
+TASK 4.2: Implement AR calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 4.1, Feature 01
+
+FORMULA:
+AR[t] = Revenue_total[t] * (DSO_days / 30)
+Delta_AR[t] = AR[t] - AR[t-1]
+
+================================================================================
+TASK 4.3: Implement Inventory and AP calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 4.1, Feature 02
+
+FORMULAS:
+Inventory[t] = Total_COGS[t] * (DIO_days / 30)
+AP[t] = Total_COGS[t] * (DPO_days / 30)
+Delta_Inventory[t] = Inventory[t] - Inventory[t-1]
+Delta_AP[t] = AP[t] - AP[t-1]
+
+================================================================================
+TASK 4.4: Implement net WC change
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 4.2, 4.3
+
+FORMULA:
+Delta_WC[t] = Delta_AR[t] + Delta_Inventory[t] - Delta_AP[t]
+
+DELIVERABLE:
+```python
+def working_capital_engine(
+    revenue: Dict[str, float],
+    cogs: Dict[str, float],
+    wc_terms: WCTerms
+) -> WCOutput:
+    pass
+
+@dataclass
+class WCOutput:
+    ar: Dict[str, float]
+    inventory: Dict[str, float]
+    ap: Dict[str, float]
+    delta_ar: Dict[str, float]
+    delta_inventory: Dict[str, float]
+    delta_ap: Dict[str, float]
+    delta_wc: Dict[str, float]
+```
+
+================================================================================
+TASK 4.5: Add WC validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 4.4
+
+VALIDATIONS:
+- DSO, DIO, DPO >= 0
+- AR, Inventory, AP >= 0
+- Sign coherence tests
+
+TESTS:
+- [ ] Zero revenue -> Zero AR
+- [ ] Higher DSO -> Higher AR -> Worse cash
+- [ ] Higher DPO -> Higher AP -> Better cash
+
+================================================================================
+END OF TASKS FOR FEATURE 04
+================================================================================

@@ -1,0 +1,210 @@
+CLAUDE MASTER INSTRUCTIONS
+PROJECT: ReSemis – Enterprise Performance Measurement (EPM) Engine
+ROLE: You are a senior software + financial modeling engineer.
+OBJECTIVE: Build a deterministic, scenario-driven EPM engine from an Excel financial model and supporting business documents.
+
+========================
+1. NON-NEGOTIABLE GOALS
+========================
+
+1.1 What you are building
+- A deterministic financial and performance engine
+- Monthly granularity
+- Scenario-driven (Base / Conservative / Aggressive)
+- Investor-grade outputs (IRR, valuation, cash runway)
+- Excel is INPUT ONLY, never runtime
+
+1.2 What you are NOT building
+- Not a BI dashboard first
+- Not a data lake
+- Not a visual Excel clone
+- Not a stochastic or probabilistic model
+
+1.3 Golden rule
+SCENARIOS MAY CHANGE INPUTS ONLY.
+FORMULAS AND LOGIC MUST NEVER CHANGE BETWEEN SCENARIOS.
+
+========================
+2. SOURCE OF TRUTH
+========================
+
+Canonical inputs:
+- ReSemis_Financial_Model_V4_Claude.xlsx → baseline logic only
+- BOOK_RESEMIS_business_plus_financials.pdf → COGS / BOM truth
+- Roadmap 2026 / 2027 / 2028 documents → timing, ramp, constraints
+- Poultry Italy deck → pricing bands, TAM/SAM/SOM logic
+
+If there is a conflict:
+1) BOOK_RESEMIS_business_plus_financials.pdf overrides Excel on costs
+2) Roadmaps override Excel on timing and ramps
+3) Excel is never allowed to hardcode scenarios
+
+========================
+3. ARCHITECTURE (MANDATORY)
+========================
+
+You MUST implement this structure:
+
+/assumptions
+  - base.yaml
+  - conservative.yaml
+  - aggressive.yaml
+
+/models
+  - revenue.py
+  - cogs.py
+  - opex.py
+  - cashflow.py
+  - valuation.py
+  - captable.py
+  - kpis.py
+
+/scenario_engine.py
+/api (optional later)
+/ui (optional later)
+
+Rules:
+- Pure functions only
+- No global state
+- No hardcoded numbers outside YAML
+- All outputs reproducible
+
+========================
+4. DATA MODEL (LOGICAL)
+========================
+
+Dimensions:
+- Time: month, quarter, year
+- Scenario
+- Product (RunCover, LitterCover, BioCore)
+- Species (Ovaiole, Broiler, etc.)
+- Channel (Direct, Partner, B2B2B)
+- Geography (Italy, EU)
+
+Facts:
+- Revenue
+- COGS (ingredient-level)
+- OpEx (function-level)
+- Cashflow
+- Cap table
+
+Derived only (never stored):
+- Gross Margin %
+- EBITDA %
+- IRR
+- MOIC
+- CAC
+- Payback
+- COGS/kg
+- Revenue/kg
+- Capacity utilization
+
+========================
+5. BUSINESS RULES
+========================
+
+5.1 Revenue
+- Revenue = active_customers × volume_per_customer × price
+- Customers have onboarding lag (default 2 months)
+- Churn applies only after activation
+- Pricing must respect min/max bands by segment
+
+5.2 COGS (CRITICAL)
+- COGS must be BOM-driven
+- Ingredient costs + processing + packaging + logistics
+- Yield loss applied (default 4–8%)
+- Industrial costs decline with volume (learning curve)
+- Static €/kg COGS is FORBIDDEN
+
+5.3 OpEx
+- Headcount ramps by roadmap phase
+- Marketing spend tied to acquisition, not % revenue
+- Regulatory costs gated by decision points
+- Flat OpEx profiles are INVALID
+
+5.4 Cashflow
+- EBITDA ≠ cash
+- Working capital modeled explicitly
+- DSO, inventory days, payables required
+- Runway calculated monthly
+
+========================
+6. SCENARIO DEFINITIONS
+========================
+
+Scenarios differ ONLY by inputs such as:
+- Customer acquisition rate
+- Churn
+- Price realization
+- COGS reduction speed
+- Market expansion timing
+
+Hard constraint:
+BASE CASE MUST REACH ~€2–3M REVENUE IN 2028.
+If not, the scenario is invalid and must error.
+
+Conservative MUST ALWAYS be <= Base.
+Aggressive MUST ALWAYS be >= Base.
+
+========================
+7. INVESTOR LAYER (REQUIRED)
+========================
+
+You MUST implement:
+- IRR per round (Seed, Pre-A, Series A)
+- MOIC
+- Exit waterfall
+- DCF (scenario-based)
+- Venture Capital Method
+- Cap table evolution
+
+No valuation = model is incomplete.
+
+========================
+8. VALIDATION & TESTING
+========================
+
+You MUST:
+- Reproduce Excel outputs ±0.1% for baseline
+- Write unit tests for each module
+- Fail loudly if constraints are violated
+- Never “fix” assumptions silently
+
+========================
+9. EXECUTION ORDER (STRICT)
+========================
+
+1. Reconstruct revenue logic from Excel
+2. Reconstruct COGS logic (then replace with BOM-based engine)
+3. Reconstruct OpEx with roadmap ramps
+4. Implement scenario engine
+5. Add cashflow & runway
+6. Add valuation & IRR
+7. Add KPI layer
+8. Only then consider UI
+
+========================
+10. FAILURE MODES (FORBIDDEN)
+========================
+
+- Hardcoded scenario logic
+- Flat COGS or OpEx
+- EBITDA without cash reconciliation
+- Conservative scenario outperforming Base
+- Changing assumptions to “make it work”
+- UI before financial correctness
+
+========================
+11. OUTPUT EXPECTATIONS
+========================
+
+Your output must be:
+- Deterministic
+- Explainable
+- Auditable
+- Investor-grade
+- Ready for Series A scrutiny
+
+If any instruction is ambiguous:
+STOP and ASK.
+Do NOT guess.

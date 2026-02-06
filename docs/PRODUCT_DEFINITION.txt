@@ -1,0 +1,165 @@
+================================================================================
+RESEMIS EPM ENGINE - PRODUCT DEFINITION
+================================================================================
+
+PROJECT: ReSemis Enterprise Performance Measurement (EPM) Engine
+VERSION: 1.0
+STATUS: Planning Phase
+
+================================================================================
+1. PRODUCT OVERVIEW
+================================================================================
+
+The ReSemis EPM Engine is a deterministic, scenario-driven financial modeling
+system designed to produce investor-grade outputs from structured assumptions.
+
+KEY CHARACTERISTICS:
+- Deterministic: Same inputs always produce same outputs
+- Scenario-driven: Base / Conservative / Aggressive scenarios
+- Monthly granularity: All calculations at month level
+- Kg-first: Physical units (kg) drive all calculations before EUR
+- BOM-driven: Costs derived from Bill of Materials, not flat rates
+- Investor-grade: IRR, MOIC, DCF, cash runway outputs
+
+================================================================================
+2. WHAT WE ARE BUILDING
+================================================================================
+
+- A deterministic financial and performance engine
+- Monthly granularity calculations
+- Scenario-driven analysis (Base / Conservative / Aggressive)
+- Investor-grade outputs (IRR, valuation, cash runway)
+- Excel as INPUT ONLY, never runtime
+
+================================================================================
+3. WHAT WE ARE NOT BUILDING
+================================================================================
+
+- NOT a BI dashboard first
+- NOT a data lake
+- NOT a visual Excel clone
+- NOT a stochastic or probabilistic model
+
+================================================================================
+4. GOLDEN RULE
+================================================================================
+
+SCENARIOS MAY CHANGE INPUTS ONLY.
+FORMULAS AND LOGIC MUST NEVER CHANGE BETWEEN SCENARIOS.
+
+================================================================================
+5. FEATURES LIST
+================================================================================
+
+FEATURE 01: Revenue Engine
+    - Market demand calculation (TAM/SAM/SOM)
+    - Product mix allocation
+    - Pricing with discounts
+    - Capacity constraints
+    - Output: Units_kg and Revenue per product/market/month
+
+FEATURE 02: COGS Engine
+    - BOM-driven cost calculation
+    - Variable COGS from ingredients
+    - Fixed COGS allocation
+    - Yield loss modeling
+    - Output: COGS per product/month
+
+FEATURE 03: OpEx Engine
+    - Fixed OpEx with ramp factors
+    - Variable OpEx linked to activity drivers
+    - Sales & Marketing with CAC
+    - Output: Total OpEx per month
+
+FEATURE 04: Working Capital Engine
+    - DSO (Days Sales Outstanding)
+    - DIO (Days Inventory Outstanding)
+    - DPO (Days Payables Outstanding)
+    - Output: Delta Working Capital per month
+
+FEATURE 05: Cashflow Engine
+    - EBITDA calculation
+    - Operating Cash Flow
+    - Free Cash Flow
+    - Cash balance tracking
+    - Output: Cash position per month
+
+FEATURE 06: Valuation Engine
+    - DCF (Gordon Growth or Exit Multiple)
+    - Enterprise Value
+    - Equity Value
+    - IRR calculation
+    - MOIC calculation
+    - Output: Investor KPIs
+
+FEATURE 07: Scenario Engine
+    - Assumption loading
+    - Scenario iteration
+    - Input override mechanism
+    - Output aggregation
+    - Output: Multi-scenario comparison
+
+FEATURE 08: Assumptions Layer
+    - YAML-based configuration
+    - Schema validation
+    - No hardcoded values
+    - Output: Validated input sets
+
+FEATURE 09: Validation & Testing
+    - Unit tests per module
+    - Excel reconciliation (+/- 0.1%)
+    - Constraint validation
+    - Fail-loud error handling
+    - Output: Test reports
+
+================================================================================
+6. SOURCE OF TRUTH HIERARCHY
+================================================================================
+
+1. BOOK_RESEMIS_business_plus_financials.pdf (overrides Excel on costs)
+2. Roadmap documents (override Excel on timing/ramps)
+3. ReSemis_Financial_Model_V4_Claude.xlsx (baseline logic only)
+
+================================================================================
+7. ARCHITECTURE OVERVIEW
+================================================================================
+
+/assumptions
+    base.yaml
+    conservative.yaml
+    aggressive.yaml
+
+/models
+    volume.py
+    pricing.py
+    revenue.py
+    bom.py
+    cogs.py
+    opex.py
+    cashflow.py
+    valuation.py
+
+/scenario_engine.py
+
+/tests
+    test_volume.py
+    test_revenue.py
+    test_cogs.py
+    test_opex.py
+    test_cashflow.py
+    test_valuation.py
+
+================================================================================
+8. SUCCESS CRITERIA
+================================================================================
+
+- Excel outputs reproduced within +/- 0.1%
+- All scenarios run with identical logic
+- No hardcoded numbers in models
+- No flat COGS or OpEx
+- Full auditability of every number
+- Investor-grade documentation
+
+================================================================================
+END OF PRODUCT DEFINITION
+================================================================================

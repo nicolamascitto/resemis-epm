@@ -1,0 +1,275 @@
+meta:
+  project: ReSemis EPM - Workbook V8 Bridge
+  source_workbook: c:\projects\resemis-model-audit\output\ReSemis_Financial_Model_V8_CGPT_Rsheet_audited_v15.xlsx
+  granularity: monthly
+  currency: EUR
+  unit_base: kg
+time_horizon:
+  start_month: 2026-01
+  end_month: 2030-12
+products:
+- product_id: poultry_direct
+  product_name: Poultry Direct
+  unit: kg
+- product_id: poultry_partner
+  product_name: Poultry Partner
+  unit: kg
+- product_id: litter_soil
+  product_name: Litter Soil B2B2B
+  unit: kg
+markets:
+- market_id: global
+  geo: EU
+  activation_month: 2026-01
+scenarios:
+- scenario_id: base
+  description: Workbook V8 base bridge
+- scenario_id: conservative
+  description: Downside bridge
+- scenario_id: aggressive
+  description: Upside bridge
+volume:
+  tam:
+    per_market_kg:
+      global: 1000000000000.0
+  sam_share:
+    per_market_pct:
+      global: 1.0
+  som_share:
+    per_market_pct:
+      global: 1.0
+    ramp:
+      by_market:
+        global:
+          start_month: 2026-01
+          duration_months: 0
+          curve: linear
+  capacity:
+    enabled: true
+    by_month:
+      2026-01: 762.5
+      2026-02: 762.5
+      2026-03: 762.5
+      2026-04: 762.5
+      2026-05: 762.5
+      2026-06: 762.5
+      2026-07: 762.5
+      2026-08: 762.5
+      2026-09: 762.5
+      2026-10: 762.5
+      2026-11: 762.5
+      2026-12: 762.5
+      2027-01: 4766.666666666667
+      2027-02: 4766.666666666667
+      2027-03: 4766.666666666667
+      2027-04: 4766.666666666667
+      2027-05: 4766.666666666667
+      2027-06: 4766.666666666667
+      2027-07: 4766.666666666667
+      2027-08: 4766.666666666667
+      2027-09: 4766.666666666667
+      2027-10: 4766.666666666667
+      2027-11: 4766.666666666667
+      2027-12: 4766.666666666667
+      2028-01: 30033.333333333332
+      2028-02: 30033.333333333332
+      2028-03: 30033.333333333332
+      2028-04: 30033.333333333332
+      2028-05: 30033.333333333332
+      2028-06: 30033.333333333332
+      2028-07: 30033.333333333332
+      2028-08: 30033.333333333332
+      2028-09: 30033.333333333332
+      2028-10: 30033.333333333332
+      2028-11: 30033.333333333332
+      2028-12: 30033.333333333332
+      2029-01: 151240.0
+      2029-02: 151240.0
+      2029-03: 151240.0
+      2029-04: 151240.0
+      2029-05: 151240.0
+      2029-06: 151240.0
+      2029-07: 151240.0
+      2029-08: 151240.0
+      2029-09: 151240.0
+      2029-10: 151240.0
+      2029-11: 151240.0
+      2029-12: 151240.0
+      2030-01: 510683.3333333333
+      2030-02: 510683.3333333333
+      2030-03: 510683.3333333333
+      2030-04: 510683.3333333333
+      2030-05: 510683.3333333333
+      2030-06: 510683.3333333333
+      2030-07: 510683.3333333333
+      2030-08: 510683.3333333333
+      2030-09: 510683.3333333333
+      2030-10: 510683.3333333333
+      2030-11: 510683.3333333333
+      2030-12: 510683.3333333333
+mix:
+  by_market:
+    global:
+      by_product:
+        poultry_direct:
+          by_year:
+            '2026': 0.5901639344262295
+            '2027': 0.5594405594405595
+            '2028': 0.46614872364039955
+            '2029': 0.3967204443268976
+            '2030': 0.2610880845925394
+        poultry_partner:
+          by_year:
+            '2026': 0.0
+            '2027': 0.0
+            '2028': 0.13429522752497228
+            '2029': 0.24623115577889448
+            '2030': 0.3717567964492021
+        litter_soil:
+          by_year:
+            '2026': 0.4098360655737705
+            '2027': 0.4405594405594406
+            '2028': 0.3995560488346282
+            '2029': 0.3570483998942079
+            '2030': 0.36715511895825853
+pricing:
+  list_price:
+    by_product:
+      poultry_direct:
+        by_month:
+          2026-01: 14.555555555555555
+          2027-01: 11.493
+          2028-01: 10.140476190476189
+          2029-01: 9.49
+          2030-01: 9.26
+      poultry_partner:
+        by_month:
+          2026-01: 6.8
+          2027-01: 7.645
+          2028-01: 7.905454545454546
+          2029-01: 7.373214285714286
+          2030-01: 7.11
+      litter_soil:
+        by_month:
+          2026-01: 11.353333333333332
+          2027-01: 8.36095238095238
+          2028-01: 6.673333333333333
+          2029-01: 5.99537037037037
+          2030-01: 5.597777777777778
+  discounts:
+    by_product:
+      poultry_direct:
+        by_market:
+          global:
+            by_month: {}
+      poultry_partner:
+        by_market:
+          global:
+            by_month: {}
+      litter_soil:
+        by_market:
+          global:
+            by_month: {}
+bom:
+  by_product:
+    poultry_direct:
+      inputs:
+      - input_id: rm_direct
+        input_name: Direct RM
+        qty_per_kg: 1.0
+    poultry_partner:
+      inputs:
+      - input_id: rm_partner
+        input_name: Partner RM
+        qty_per_kg: 1.0
+    litter_soil:
+      inputs:
+      - input_id: rm_litter
+        input_name: Litter RM
+        qty_per_kg: 1.0
+input_prices:
+  by_input:
+    rm_direct:
+      base_price: 0.0
+      by_month:
+        2026-01: 3.3710491803278684
+        2027-01: 3.361832167832168
+        2028-01: 3.205426526082131
+        2029-01: 3.048196932028564
+        2030-01: 2.8762754446656436
+    rm_partner:
+      base_price: 0.0
+      by_month:
+        2026-01: 0.0
+        2027-01: 0.0
+        2028-01: 3.2054265260821313
+        2029-01: 3.0481969320285645
+        2030-01: 2.876275444665644
+    rm_litter:
+      base_price: 0.0
+      by_month:
+        2026-01: 3.3710491803278684
+        2027-01: 3.3618321678321674
+        2028-01: 3.2054265260821313
+        2029-01: 3.048196932028564
+        2030-01: 2.876275444665644
+fixed_cogs:
+  base_monthly: 0.0
+  ramp:
+    by_month: {}
+opex:
+  fixed:
+    by_category:
+      management_ga:
+        base_monthly: 16000.0
+        ramp:
+          by_month:
+            2026-01: 1.0
+            2027-01: 3.4270833333333335
+            2028-01: 5.026041666666667
+            2029-01: 7.03125
+            2030-01: 8.411458333333334
+  variable:
+    by_driver: {}
+  sales_marketing:
+    fixed_base: 0.0
+    ramp:
+      by_month: {}
+    cac:
+      by_market:
+        global: 0.0
+working_capital:
+  dso_days: 66
+  dio_days: 60
+  dpo_days: 45
+capex:
+  base_monthly: 0.0
+  milestones:
+    by_month:
+      2026-01: 30000.0
+      2027-01: 170000.0
+      2028-01: 950000.0
+      2029-01: 230000.0
+      2030-01: 230000.0
+funding:
+  initial_cash: 0.0
+  equity:
+    by_month: &id001
+      2026-01: 200000.0
+      2027-01: 1500000.0
+      2028-01: 4000000.0
+      2029-01: 0.0
+      2030-01: 0.0
+  debt:
+    interest_rate: 0.0
+    by_month: {}
+valuation:
+  discount_rate: 0.25
+  terminal_growth_rate: 0.03
+  terminal_method: gordon
+  terminal_multiple: 3.0
+  exit_year: 2030
+  equity:
+    ownership_pct: 1.0
+    invested:
+      by_month: *id001

@@ -1,0 +1,127 @@
+================================================================================
+TASKS: FEATURE 05 - CASHFLOW ENGINE
+================================================================================
+
+FEATURE: Cashflow Engine
+TOTAL TASKS: 7
+BLOCKED BY: Features 01, 02, 03, 04
+
+================================================================================
+TASK 5.1: Define capex and funding structures
+================================================================================
+
+STATUS: [ ] Not Started
+
+DELIVERABLE:
+```python
+@dataclass
+class CapexSchedule:
+    base: Dict[str, float]  # monthly base capex
+    milestones: Dict[str, float]  # one-off investments
+
+@dataclass
+class FundingSchedule:
+    equity_raise: Dict[str, float]
+    debt_draw: Dict[str, float]
+    debt_repayment: Dict[str, float]
+    interest_rate: float
+```
+
+================================================================================
+TASK 5.2: Implement EBITDA calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Features 01, 02, 03
+
+FORMULA:
+EBITDA[t] = Revenue_total[t] - Total_COGS[t] - Total_OpEx[t]
+
+================================================================================
+TASK 5.3: Implement Operating Cash Flow
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 5.2, Feature 04
+
+FORMULA:
+Operating_CF[t] = EBITDA[t] - Delta_WC[t]
+
+================================================================================
+TASK 5.4: Implement Free Cash Flow
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 5.3
+
+FORMULA:
+Free_CF[t] = Operating_CF[t] - Capex_base[t] - Capex_milestone[t]
+
+================================================================================
+TASK 5.5: Implement Financing Cash Flow
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 5.1
+
+FORMULA:
+Interest_payment[t] = Debt_balance[t-1] * (Interest_rate / 12)
+Financing_CF[t] = Equity_raise[t] + Debt_draw[t] - Debt_repayment[t] - Interest_payment[t]
+
+================================================================================
+TASK 5.6: Implement Cash Balance tracking
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 5.4, 5.5
+
+FORMULA:
+Net_CF[t] = Free_CF[t] + Financing_CF[t]
+Cash_balance[t] = Cash_balance[t-1] + Net_CF[t]
+
+DELIVERABLE:
+```python
+def cashflow_engine(
+    revenue: Dict[str, float],
+    cogs: Dict[str, float],
+    opex: Dict[str, float],
+    delta_wc: Dict[str, float],
+    capex: CapexSchedule,
+    funding: FundingSchedule,
+    initial_cash: float
+) -> CashflowOutput:
+    pass
+
+@dataclass
+class CashflowOutput:
+    ebitda: Dict[str, float]
+    operating_cf: Dict[str, float]
+    free_cf: Dict[str, float]
+    financing_cf: Dict[str, float]
+    net_cf: Dict[str, float]
+    cash_balance: Dict[str, float]
+    debt_balance: Dict[str, float]
+    funding_gaps: List[str]  # months with negative cash
+```
+
+================================================================================
+TASK 5.7: Add Cashflow validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 5.6
+
+VALIDATIONS:
+- EBITDA = Revenue - COGS - OpEx (exact)
+- Cash_balance coherence
+- FLAG (not block) negative cash
+
+TESTS:
+- [ ] Zero revenue -> EBITDA = -OpEx
+- [ ] WC adjustment test
+- [ ] Capex shock test
+- [ ] Funding injection test
+
+================================================================================
+END OF TASKS FOR FEATURE 05
+================================================================================

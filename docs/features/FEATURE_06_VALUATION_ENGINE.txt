@@ -1,0 +1,224 @@
+================================================================================
+FEATURE 06: VALUATION ENGINE
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical (Investor-Grade Requirement)
+DEPENDENCIES: Cashflow Engine (Feature 05)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Produce investor-grade valuation metrics:
+- Enterprise Value via DCF
+- Equity Value
+- IRR per investment round
+- MOIC (Multiple on Invested Capital)
+
+No valuation = Model incomplete.
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+Valuation:
+- Terminal_value       : Terminal value at horizon
+- Enterprise_value     : Present value of FCF + terminal
+- Equity_value         : Enterprise - Net Debt + Cash
+
+Investor KPIs:
+- IRR                  : Internal Rate of Return
+- MOIC                 : Multiple on Invested Capital
+- Payback_period       : Months to recover investment
+
+Unit Economics:
+- Gross_margin[t]      : (Revenue - COGS) / Revenue
+- Contribution_margin[t]: (Revenue - Variable_COGS - Variable_OpEx) / Revenue
+- Revenue_per_kg[t]    : Revenue / kg
+- COGS_per_kg[t]       : COGS / kg
+- OpEx_to_Revenue[t]   : OpEx / Revenue
+
+================================================================================
+3. INPUT REQUIRED
+================================================================================
+
+From Cashflow Engine:
+- Free_CF[t]           : Free Cash Flow per month
+- EBITDA[t]            : EBITDA per month
+- Cash_balance[T]      : Terminal cash balance
+- Debt_balance[T]      : Terminal debt balance
+
+Valuation Parameters:
+- Discount_rate        : WACC or hurdle rate (annual)
+- Terminal_growth_rate : Long-term growth rate
+- Terminal_multiple    : Exit EBITDA multiple (alternative to Gordon)
+- Valuation_horizon_T  : Final month of projection
+
+Equity Structure:
+- Equity_invested[t]   : Equity capital invested per period
+- Ownership_pct        : Investor ownership percentage
+- Exit_year            : Expected exit timing
+
+From Other Engines (for unit economics):
+- Revenue_total[t]
+- Total_COGS[t]
+- Variable_COGS[t]
+- Total_OpEx[t]
+- Variable_OpEx[t]
+- Units_kg_total[t]
+
+================================================================================
+4. CALCULATION RULES
+================================================================================
+
+--- DCF VALUATION ---
+
+Step 1: Monthly Discount Factor
+    monthly_rate = (1 + Discount_rate)^(1/12) - 1
+    discount_factor[t] = 1 / (1 + monthly_rate)^t
+
+Step 2: Present Value of FCF
+    PV_FCF = SUM_t(Free_CF[t] * discount_factor[t])
+
+Step 3a: Terminal Value (Gordon Growth)
+    IF using Gordon:
+        Terminal_CF = Free_CF[T] * (1 + Terminal_growth_rate)
+        Terminal_value = Terminal_CF / (Discount_rate - Terminal_growth_rate)
+
+Step 3b: Terminal Value (Exit Multiple)
+    IF using multiple:
+        Terminal_value = EBITDA[T] * Terminal_multiple
+
+Step 4: Present Value of Terminal
+    PV_Terminal = Terminal_value * discount_factor[T]
+
+Step 5: Enterprise Value
+    Enterprise_value = PV_FCF + PV_Terminal
+
+Step 6: Equity Value
+    Equity_value = Enterprise_value + Cash_balance[T] - Debt_balance[T]
+
+--- INVESTOR KPIs ---
+
+Step 7: Cash Flow to Equity
+    CF_equity[t] = -Equity_invested[t]  (investment years)
+    CF_equity[exit] = Equity_value * Ownership_pct  (exit year)
+
+Step 8: IRR
+    Solve for r such that:
+        SUM_t(CF_equity[t] / (1 + r)^t) = 0
+
+Step 9: MOIC
+    Total_proceeds = Equity_value * Ownership_pct
+    Total_invested = SUM_t(Equity_invested[t])
+    MOIC = Total_proceeds / Total_invested
+
+Step 10: Payback Period
+    First t where: SUM_{i=0..t}(CF_equity[i]) >= 0
+
+--- UNIT ECONOMICS ---
+
+Step 11: Margins
+    Gross_margin[t] = (Revenue_total[t] - Total_COGS[t]) / Revenue_total[t]
+
+    Contribution_margin[t] = (Revenue_total[t] - Variable_COGS[t] - Variable_OpEx[t])
+                              / Revenue_total[t]
+
+Step 12: Per-Unit Metrics
+    Revenue_per_kg[t] = Revenue_total[t] / Units_kg_total[t]
+    COGS_per_kg[t] = Total_COGS[t] / Units_kg_total[t]
+    Gross_profit_per_kg[t] = Revenue_per_kg[t] - COGS_per_kg[t]
+
+Step 13: Scalability
+    OpEx_to_Revenue[t] = Total_OpEx[t] / Revenue_total[t]
+    (Should trend downward in scale-up)
+
+================================================================================
+5. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- Discount_rate <= Terminal_growth_rate (creates infinity)
+- IRR undefined (requires sign change in CF_equity)
+- Marketing metrics (only investor-grade)
+
+REQUIRED:
+- Explicit terminal value method
+- Clear discount rate source
+- IRR calculation with proper root finding
+
+================================================================================
+6. VALIDATIONS (Fail Loud)
+================================================================================
+
+- Discount_rate > Terminal_growth_rate
+- IRR defined (CF_equity has sign change)
+- No division by zero (Units_kg_total > 0 for unit metrics)
+- Valuation_horizon >= Exit_year
+- Equity_invested > 0 (at least one investment)
+
+WARNING (not blocking):
+- Terminal value > 70% of EV (high terminal dependence)
+- Negative IRR (valid but concerning)
+
+Scenario Coherence:
+- Aggressive scenario >= Base >= Conservative (for EV, IRR, MOIC)
+
+VIOLATION = BLOCKING ERROR
+
+================================================================================
+7. SCENARIO RULES
+================================================================================
+
+Scenarios may vary:
+- Discount_rate (conservative = higher)
+- Terminal_growth_rate
+- Exit_multiple or Exit_timing
+- All upstream inputs (Revenue, COGS, OpEx, CF)
+
+Scenarios may NEVER:
+- Change valuation formulas
+- Use different methods per scenario (unless explicitly flagged)
+
+================================================================================
+8. TEST CHECKLIST
+================================================================================
+
+[ ] Zero FCF test: Zero Free_CF -> Zero EV
+[ ] Sensitivity test: Higher discount -> Lower EV
+[ ] Terminal dominance: Flag if terminal > 70% EV
+[ ] IRR existence: Verify sign change in CF_equity
+[ ] MOIC sanity: MOIC >= 1 means profitable exit
+[ ] Scenario ordering: Aggressive > Base > Conservative
+[ ] Excel reconciliation: +/- 0.1% on headline KPIs
+[ ] Payback coherence: Must be <= exit year if positive IRR
+
+================================================================================
+9. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    free_cf: Dict[month, float]
+    ebitda: Dict[month, float]
+    cash_terminal: float
+    debt_terminal: float
+    valuation_params: ValuationParams
+    equity_schedule: EquitySchedule
+
+Output:
+    ValuationOutput:
+        terminal_value: float
+        enterprise_value: float
+        equity_value: float
+        irr: float
+        moic: float
+        payback_months: int
+        gross_margin: Dict[month, float]
+        contribution_margin: Dict[month, float]
+        revenue_per_kg: Dict[month, float]
+        cogs_per_kg: Dict[month, float]
+
+================================================================================
+END OF FEATURE 06
+================================================================================

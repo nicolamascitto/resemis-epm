@@ -1,0 +1,321 @@
+================================================================================
+FEATURE 08: ASSUMPTIONS LAYER
+================================================================================
+
+STATUS: Not Started
+PRIORITY: Critical (Foundation - Must be first)
+DEPENDENCIES: None (Foundation layer)
+
+================================================================================
+1. BUSINESS INTENT
+================================================================================
+
+Serve as the SINGLE SOURCE OF TRUTH for all inputs:
+- No hardcoded numbers in models
+- All values versionable and auditable
+- Schema-enforced structure
+
+Models read assumptions, never modify them.
+
+================================================================================
+2. OUTPUT PRODUCED
+================================================================================
+
+- Validated assumption objects for each scenario
+- Schema validation reports
+- Assumption diff between scenarios
+
+================================================================================
+3. FILE STRUCTURE
+================================================================================
+
+/assumptions
+    schema.yaml           # Structure definition (keys, types, constraints)
+    base.yaml             # Base case values
+    conservative.yaml     # Downside case values
+    aggressive.yaml       # Upside case values
+
+================================================================================
+4. SCHEMA DEFINITION
+================================================================================
+
+# schema.yaml (structure only, no values)
+
+meta:
+    project: string
+    granularity: enum[monthly]
+    currency: enum[EUR]
+    unit_base: enum[kg]
+
+time_horizon:
+    start_month: YYYY-MM
+    end_month: YYYY-MM
+
+scenarios:
+    - scenario_id: string
+      description: string
+
+products:
+    - product_id: string
+      product_name: string
+      unit: enum[kg]
+
+markets:
+    - market_id: string
+      geo: string
+      activation_month: YYYY-MM
+
+volume:
+    tam:
+        per_market_kg:
+            <market_id>: float >= 0
+    sam_share:
+        per_market_pct:
+            <market_id>: float [0, 1]
+    som_share:
+        per_market_pct:
+            <market_id>: float [0, 1]
+        ramp:
+            by_market:
+                <market_id>:
+                    start_month: YYYY-MM
+                    duration_months: int >= 0
+
+pricing:
+    list_price_eur_per_kg:
+        by_product:
+            <product_id>:
+                by_month:
+                    <YYYY-MM>: float >= 0
+    discounts:
+        by_scenario:
+            <scenario_id>:
+                by_product:
+                    <product_id>:
+                        by_month:
+                            <YYYY-MM>: float [0, 1]
+
+bom:
+    by_product:
+        <product_id>:
+            inputs:
+                - input_id: string
+                  qty_per_kg: float >= 0
+
+input_prices:
+    by_input:
+        <input_id>:
+            by_scenario:
+                <scenario_id>:
+                    by_month:
+                        <YYYY-MM>: float >= 0
+
+opex:
+    fixed:
+        by_category:
+            <category_id>:
+                by_month:
+                    <YYYY-MM>: float >= 0
+    variable:
+        by_driver:
+            <driver_id>:
+                cost_per_unit: float >= 0
+
+working_capital:
+    dso_days: int >= 0
+    dpo_days: int >= 0
+    dio_days: int >= 0
+
+capex:
+    by_month:
+        <YYYY-MM>: float >= 0
+
+valuation:
+    discount_rate: float > 0
+    terminal_growth_rate: float
+    terminal_multiple: float > 0  # optional
+    exit_year: int
+
+funding:
+    equity:
+        by_month:
+            <YYYY-MM>: float >= 0
+    debt:
+        by_month:
+            <YYYY-MM>: float >= 0
+    interest_rate: float >= 0
+
+================================================================================
+5. VALIDATION RULES
+================================================================================
+
+Type Validation:
+- All floats are valid numbers
+- All dates are YYYY-MM format
+- All percentages in [0, 1]
+- All IDs are non-empty strings
+
+Completeness:
+- Every product has a BOM
+- Every market has TAM/SAM/SOM
+- Every required key exists
+
+Consistency:
+- start_month < end_month
+- discount_rate > terminal_growth_rate
+- SUM of product_mix = 1 for each market/month
+
+Cross-Scenario:
+- All scenarios have same structure
+- Scenarios differ only in values
+
+================================================================================
+6. LOADING MECHANISM
+================================================================================
+
+def load_assumptions(scenario_id: str) -> Assumptions:
+    # 1. Load schema
+    schema = load_yaml("schema.yaml")
+
+    # 2. Load base assumptions
+    base = load_yaml("base.yaml")
+
+    # 3. If not base, load and merge scenario
+    if scenario_id != "base":
+        scenario_overrides = load_yaml(f"{scenario_id}.yaml")
+        assumptions = deep_merge(base, scenario_overrides)
+    else:
+        assumptions = base
+
+    # 4. Validate against schema
+    validate(assumptions, schema)
+
+    # 5. Return typed object
+    return Assumptions.from_dict(assumptions)
+
+================================================================================
+7. CRITICAL RULES
+================================================================================
+
+FORBIDDEN:
+- Default values in code (all defaults in YAML)
+- Implicit assumptions (everything explicit)
+- Reading assumptions from multiple sources
+- Modifying assumptions at runtime
+
+REQUIRED:
+- Schema validation before use
+- Version tracking (hash)
+- Audit trail capability
+
+================================================================================
+8. ERROR HANDLING
+================================================================================
+
+MissingKeyError:
+    "Required key 'volume.tam.per_market_kg.italy' not found"
+
+TypeMismatchError:
+    "Key 'pricing.list_price' expected float, got string"
+
+RangeViolationError:
+    "Key 'som_share' value 1.5 outside allowed range [0, 1]"
+
+ConsistencyError:
+    "discount_rate (0.08) must be > terminal_growth_rate (0.10)"
+
+All errors are BLOCKING - no partial loads allowed.
+
+================================================================================
+9. SCENARIO DIFF UTILITY
+================================================================================
+
+def diff_scenarios(base: Assumptions, other: Assumptions) -> Dict:
+    """
+    Returns keys where values differ between scenarios.
+    Useful for audit and documentation.
+    """
+    diff = {}
+    for key in all_keys:
+        if base[key] != other[key]:
+            diff[key] = {
+                'base': base[key],
+                'other': other[key]
+            }
+    return diff
+
+================================================================================
+10. TEST CHECKLIST
+================================================================================
+
+[ ] Schema validation: Invalid YAML fails
+[ ] Type validation: Wrong types fail
+[ ] Range validation: Out-of-range values fail
+[ ] Completeness: Missing required keys fail
+[ ] Merge test: Scenario overrides apply correctly
+[ ] Immutability: Assumptions cannot be modified after load
+[ ] Hash test: Same file -> Same hash
+[ ] Diff test: Differences correctly identified
+
+================================================================================
+11. INTERFACE CONTRACT
+================================================================================
+
+Input:
+    scenario_id: str
+    assumptions_dir: Path (default: ./assumptions)
+
+Output:
+    Assumptions (typed, immutable object)
+
+Raises:
+    AssumptionValidationError (with details)
+
+================================================================================
+12. EXAMPLE ASSUMPTION FILE
+================================================================================
+
+# base.yaml (excerpt)
+
+time_horizon:
+    start_month: "2026-01"
+    end_month: "2030-12"
+
+products:
+    - product_id: "biocore"
+      product_name: "BioCore Feed Additive"
+      unit: "kg"
+
+markets:
+    - market_id: "italy"
+      geo: "IT"
+      activation_month: "2026-06"
+
+volume:
+    tam:
+        per_market_kg:
+            italy: 12000000
+    sam_share:
+        per_market_pct:
+            italy: 0.25
+    som_share:
+        per_market_pct:
+            italy: 0.10
+        ramp:
+            by_market:
+                italy:
+                    start_month: "2026-06"
+                    duration_months: 24
+
+pricing:
+    list_price_eur_per_kg:
+        by_product:
+            biocore:
+                by_month:
+                    "2026-01": 3.50
+                    "2027-01": 3.20
+                    "2028-01": 3.00
+
+================================================================================
+END OF FEATURE 08
+================================================================================

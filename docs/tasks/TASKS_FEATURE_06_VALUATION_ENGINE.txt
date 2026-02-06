@@ -1,0 +1,128 @@
+================================================================================
+TASKS: FEATURE 06 - VALUATION ENGINE
+================================================================================
+
+FEATURE: Valuation Engine (Investor-Grade)
+TOTAL TASKS: 8
+BLOCKED BY: Feature 05 (Cashflow)
+
+================================================================================
+TASK 6.1: Define valuation parameters
+================================================================================
+
+STATUS: [ ] Not Started
+
+DELIVERABLE:
+```python
+@dataclass
+class ValuationParams:
+    discount_rate: float  # WACC or hurdle
+    terminal_growth_rate: float
+    terminal_multiple: Optional[float]  # if using multiple method
+    valuation_horizon_months: int
+    method: Literal["gordon", "multiple"]
+
+@dataclass
+class EquitySchedule:
+    invested: Dict[str, float]  # by month
+    ownership_pct: float
+    exit_month: str
+```
+
+================================================================================
+TASK 6.2: Implement DCF - Gordon Growth method
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 6.1
+
+FORMULAS:
+monthly_rate = (1 + discount_rate)^(1/12) - 1
+discount_factor[t] = 1 / (1 + monthly_rate)^t
+PV_FCF = SUM_t(Free_CF[t] * discount_factor[t])
+Terminal_value = FCF[T] * (1 + terminal_growth) / (discount - terminal_growth)
+PV_Terminal = Terminal_value * discount_factor[T]
+Enterprise_value = PV_FCF + PV_Terminal
+
+================================================================================
+TASK 6.3: Implement DCF - Exit Multiple method
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 6.1
+
+FORMULA:
+Terminal_value = EBITDA[T] * Terminal_multiple
+(rest same as Gordon)
+
+================================================================================
+TASK 6.4: Implement Equity Value calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 6.2, 6.3
+
+FORMULA:
+Equity_value = Enterprise_value + Cash_balance[T] - Debt_balance[T]
+
+================================================================================
+TASK 6.5: Implement IRR calculation
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 6.4
+
+FORMULA:
+CF_equity[t] = -Equity_invested[t] (investment)
+CF_equity[exit] = Equity_value * Ownership_pct (exit)
+IRR = solve NPV(CF_equity, IRR) = 0
+
+Use scipy.optimize or newton-raphson.
+
+================================================================================
+TASK 6.6: Implement MOIC and Payback
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Task 6.4
+
+FORMULAS:
+MOIC = Total_proceeds / Total_invested
+Payback = First t where cumulative CF_equity >= 0
+
+================================================================================
+TASK 6.7: Implement Unit Economics KPIs
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Features 01, 02, 03
+
+FORMULAS:
+Gross_margin[t] = (Revenue - COGS) / Revenue
+Contribution_margin[t] = (Revenue - Var_COGS - Var_OpEx) / Revenue
+Revenue_per_kg[t] = Revenue / kg
+COGS_per_kg[t] = COGS / kg
+OpEx_to_Revenue[t] = OpEx / Revenue
+
+================================================================================
+TASK 6.8: Add Valuation validations and tests
+================================================================================
+
+STATUS: [ ] Not Started
+BLOCKED BY: Tasks 6.5, 6.6, 6.7
+
+VALIDATIONS:
+- discount_rate > terminal_growth_rate
+- IRR exists (sign change in CF_equity)
+- No division by zero
+- Terminal < 70% EV (warning)
+
+TESTS:
+- [ ] Zero FCF -> Zero EV
+- [ ] Higher discount -> Lower EV
+- [ ] IRR existence
+- [ ] Scenario ordering (Agg > Base > Cons)
+
+================================================================================
+END OF TASKS FOR FEATURE 06
+================================================================================
