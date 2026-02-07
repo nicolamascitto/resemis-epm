@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Mapping, Optional
 
 import pandas as pd
 
@@ -21,8 +21,32 @@ class DashboardSnapshot:
     risks: pd.DataFrame
 
 
+def _month_key(value) -> str:
+    text = str(value)
+    if len(text) >= 7:
+        return text[:7]
+    return text
+
+
 def _month_sort(values: List[str]) -> List[str]:
-    return sorted(values, key=lambda m: (int(m[:4]), int(m[5:7])))
+    def _parts(value: str):
+        text = _month_key(value)
+        try:
+            return (int(text[:4]), int(text[5:7]))
+        except Exception:
+            return (9999, 99)
+
+    return sorted([_month_key(value) for value in values], key=_parts)
+
+
+def _as_float_map(values: Mapping) -> Dict[str, float]:
+    out: Dict[str, float] = {}
+    for key, value in values.items():
+        try:
+            out[_month_key(key)] = float(value)
+        except Exception:
+            out[_month_key(key)] = 0.0
+    return out
 
 
 def _safe_pct(num: float, den: float) -> float:
@@ -30,23 +54,35 @@ def _safe_pct(num: float, den: float) -> float:
 
 
 def _to_monthly_df(result) -> pd.DataFrame:
-    months = _month_sort(list(result.revenue.revenue_total.keys()))
+    revenue_total = _as_float_map(getattr(result.revenue, "revenue_total", {}))
+    cogs_total = _as_float_map(getattr(result.cogs, "total_cogs", {}))
+    opex_total = _as_float_map(getattr(result.opex, "total_opex", {}))
+    ebitda_total = _as_float_map(getattr(result.cashflow, "ebitda", {}))
+    operating_cf_total = _as_float_map(getattr(result.cashflow, "operating_cf", {}))
+    free_cf_total = _as_float_map(getattr(result.cashflow, "free_cf", {}))
+    cash_total = _as_float_map(getattr(result.cashflow, "cash_balance", {}))
+    debt_total = _as_float_map(getattr(result.cashflow, "debt_balance", {}))
+    delta_wc_total = _as_float_map(getattr(result.working_capital, "delta_wc", {}))
+    net_wc_total = _as_float_map(getattr(result.working_capital, "net_wc", {}))
+
+    months = _month_sort(list(revenue_total.keys()))
     rows = []
     for month in months:
-        revenue = float(result.revenue.revenue_total.get(month, 0.0))
-        cogs = float(result.cogs.total_cogs.get(month, 0.0))
-        opex = float(result.opex.total_opex.get(month, 0.0))
-        ebitda = float(result.cashflow.ebitda.get(month, 0.0))
-        operating_cf = float(result.cashflow.operating_cf.get(month, 0.0))
-        free_cf = float(result.cashflow.free_cf.get(month, 0.0))
-        cash = float(result.cashflow.cash_balance.get(month, 0.0))
-        debt = float(result.cashflow.debt_balance.get(month, 0.0))
-        delta_wc = float(result.working_capital.delta_wc.get(month, 0.0))
-        net_wc = float(result.working_capital.net_wc.get(month, 0.0))
+        revenue = float(revenue_total.get(month, 0.0))
+        cogs = float(cogs_total.get(month, 0.0))
+        opex = float(opex_total.get(month, 0.0))
+        ebitda = float(ebitda_total.get(month, 0.0))
+        operating_cf = float(operating_cf_total.get(month, 0.0))
+        free_cf = float(free_cf_total.get(month, 0.0))
+        cash = float(cash_total.get(month, 0.0))
+        debt = float(debt_total.get(month, 0.0))
+        delta_wc = float(delta_wc_total.get(month, 0.0))
+        net_wc = float(net_wc_total.get(month, 0.0))
+        month_year = int(month[:4]) if len(month) >= 4 and str(month[:4]).isdigit() else 0
         rows.append(
             {
                 "month": month,
-                "year": int(month[:4]),
+                "year": month_year,
                 "revenue": revenue,
                 "cogs": cogs,
                 "gross_profit": revenue - cogs,
@@ -157,7 +193,10 @@ def _agg_revenue_by_market(result) -> pd.DataFrame:
 
 def _input_name_map(assumptions: Dict) -> Dict[str, str]:
     names: Dict[str, str] = {}
-    for product in assumptions.get("bom", {}).get("by_product", {}).values():
+    bom = assumptions.get("bom", {}).get("by_product", {})
+    if not isinstance(bom, dict):
+        return names
+    for product in bom.values():
         for item in product.get("inputs", []):
             input_id = str(item.get("input_id", "")).strip()
             if input_id:
@@ -226,6 +265,7 @@ def _latest_pricing(result) -> pd.DataFrame:
 
 
 def _build_risks(snapshot: DashboardSnapshot, result, assumptions: Dict) -> pd.DataFrame:
+    assumptions = assumptions if isinstance(assumptions, dict) else {}
     rows = []
     if snapshot.monthly.empty:
         return pd.DataFrame(columns=["risk", "level", "signal", "mitigation"])
@@ -312,7 +352,8 @@ def _build_risks(snapshot: DashboardSnapshot, result, assumptions: Dict) -> pd.D
     return pd.DataFrame(rows)
 
 
-def build_snapshot(result, assumptions: Dict) -> DashboardSnapshot:
+def build_snapshot(result, assumptions: Optional[Dict] = None) -> DashboardSnapshot:
+    assumptions = assumptions if isinstance(assumptions, dict) else {}
     monthly = _to_monthly_df(result)
     annual = _to_annual_df(monthly)
     revenue_by_product = _agg_revenue_by_product(result)

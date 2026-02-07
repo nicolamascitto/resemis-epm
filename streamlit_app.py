@@ -171,6 +171,11 @@ def _apply_theme(theme: str) -> None:
         transition: background-color 0.25s ease, color 0.25s ease;
     }}
 
+    [data-testid="stHeader"] {{
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+    }}
+
     [data-testid="stSidebar"] {{
         background: var(--surface);
         border-right: 1px solid var(--border);
@@ -178,6 +183,54 @@ def _apply_theme(theme: str) -> None:
 
     [data-testid="stSidebar"] * {{
         color: var(--text);
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="select"] > div {{
+        background: var(--surface-alt) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="select"] span {{
+        color: var(--text) !important;
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="select"] svg {{
+        fill: var(--text-muted) !important;
+    }}
+
+    [data-testid="stSidebar"] .stTextInput input,
+    [data-testid="stSidebar"] .stNumberInput input,
+    [data-testid="stSidebar"] .stTextArea textarea {{
+        background: var(--surface-alt) !important;
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+    }}
+
+    [data-testid="stSidebar"] .stButton button {{
+        background: var(--surface-alt) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+
+    [data-testid="stSidebar"] .stButton button:hover {{
+        border-color: var(--primary) !important;
+    }}
+
+    div[role="listbox"] {{
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }}
+
+    div[role="option"] {{
+        color: var(--text) !important;
+    }}
+
+    div[role="option"][aria-selected="true"] {{
+        background: var(--surface-alt) !important;
     }}
 
     .epm-topbar {{
@@ -1277,7 +1330,11 @@ def _render_scenario_lab(assumptions_dir: str, assumptions: Dict, base_result, b
             for err in stress_result.errors:
                 st.write(f"- {err}")
         else:
-            stress_snapshot = build_snapshot(stress_result, stressed_assumptions)
+            try:
+                stress_snapshot = build_snapshot(stress_result, stressed_assumptions)
+            except Exception as exc:
+                st.error(f"Stress snapshot failed: {type(exc).__name__}: {exc}")
+                return
             base_ev = _metric_value(base_result, base_snapshot, "Enterprise Value")
             stress_ev = _metric_value(stress_result, stress_snapshot, "Enterprise Value")
             base_cash = _metric_value(base_result, base_snapshot, "Ending Cash")
@@ -1335,7 +1392,10 @@ def _render_scenario_lab(assumptions_dir: str, assumptions: Dict, base_result, b
                     local_result = _run_from_assumptions(local_assumptions, scenario_id=f"sens_{driver}_{direction}")
                     if local_result.errors:
                         continue
-                    local_snapshot = build_snapshot(local_result, local_assumptions)
+                    try:
+                        local_snapshot = build_snapshot(local_result, local_assumptions)
+                    except Exception:
+                        continue
                     local_value = _metric_value(local_result, local_snapshot, metric_name)
                     sensitivity_rows.append({"shock": f"{driver} {direction}", "delta": local_value - base_metric_value})
 
@@ -1590,7 +1650,12 @@ def main() -> None:
         for err in result.errors:
             st.write(f"- {err}")
         return
-    snapshot = build_snapshot(result, assumptions)
+    try:
+        snapshot = build_snapshot(result, assumptions)
+    except Exception as exc:
+        st.error(f"Failed to build dashboard snapshot: {type(exc).__name__}: {exc}")
+        st.info("Try `Reload scenario from disk` in the sidebar. If this persists, the active assumptions file is malformed.")
+        return
     _header(section, scenario_seed)
 
     if section == "Overview":
