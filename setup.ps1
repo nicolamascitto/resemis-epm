@@ -1,7 +1,8 @@
 param(
     [string]$PythonExe = "python",
     [switch]$NoVenv,
-    [switch]$UpgradePip
+    [switch]$UpgradePip,
+    [switch]$DevTools
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,6 +21,7 @@ function Resolve-Python {
 
 $python = Resolve-Python -Exe $PythonExe
 $requirementsFile = Join-Path $repoRoot "requirements.txt"
+$devRequirementsFile = Join-Path $repoRoot "requirements-dev.txt"
 
 if (-not (Test-Path $requirementsFile)) {
     throw "Missing requirements file: $requirementsFile"
@@ -30,6 +32,10 @@ if ($NoVenv) {
         & $python -m pip install --upgrade pip
     }
     & $python -m pip install -r $requirementsFile
+    if ($DevTools -and (Test-Path $devRequirementsFile)) {
+        & $python -m pip install -r $devRequirementsFile
+        & $python -m playwright install chromium
+    }
     Write-Host "Dependencies installed in current Python environment."
     exit 0
 }
@@ -47,10 +53,14 @@ if ($UpgradePip) {
 }
 
 & $venvPython -m pip install -r $requirementsFile
+if ($DevTools -and (Test-Path $devRequirementsFile)) {
+    & $venvPython -m pip install -r $devRequirementsFile
+    & $venvPython -m playwright install chromium
+}
 
 Write-Host ""
 Write-Host "Setup complete."
 Write-Host "Activate with:"
 Write-Host "  .\.venv\Scripts\Activate.ps1"
 Write-Host "Run app with:"
-Write-Host "  python main.py run --scenario base"
+Write-Host "  streamlit run streamlit_app.py"
