@@ -32,6 +32,14 @@ Optional flags:
 streamlit run streamlit_app.py
 ```
 
+Main sections:
+
+- `Overview`: investor/CEO/CFO top-line performance.
+- `Scenario Lab`: scenario comparison, stress modeling, sensitivity.
+- `Model Inputs`: editable assumptions for clients, products, BOM, OpEx/CapEx/funding, valuation.
+- `Risk Radar`: model-driven risk register.
+- `Data Room`: exportable detailed tables.
+
 ## Run CLI Engine
 
 ```powershell

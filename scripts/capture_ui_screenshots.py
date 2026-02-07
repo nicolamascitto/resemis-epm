@@ -5,6 +5,7 @@ from __future__ import annotations
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import quote
 from urllib.request import urlopen
 
 from playwright.sync_api import sync_playwright
@@ -13,7 +14,7 @@ from playwright.sync_api import sync_playwright
 PORT = 8503
 BASE_URL = f"http://127.0.0.1:{PORT}"
 OUT_DIR = Path("docs/design/ui-validation/screenshots")
-SECTIONS = ["overview", "teams", "individuals", "goals", "reviews", "settings"]
+SECTIONS = ["overview", "scenario lab", "model inputs", "risk radar", "data room"]
 THEMES = ["light", "dark"]
 
 
@@ -54,10 +55,10 @@ def main() -> None:
             for section in SECTIONS:
                 for theme in THEMES:
                     page = context.new_page()
-                    url = f"{BASE_URL}/?section={section}&theme={theme}"
+                    url = f"{BASE_URL}/?section={quote(section)}&theme={theme}"
                     page.goto(url, wait_until="domcontentloaded", timeout=45000)
                     page.wait_for_timeout(3500)
-                    path = OUT_DIR / f"{section}_{theme}.png"
+                    path = OUT_DIR / f"{section.replace(' ', '_')}_{theme}.png"
                     page.screenshot(path=str(path), full_page=True)
                     print(f"OK {path}")
                     page.close()

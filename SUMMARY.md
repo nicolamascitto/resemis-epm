@@ -24,9 +24,25 @@
   - `scripts/capture_reference_screenshots.py`
   - `scripts/capture_ui_screenshots.py`
 - Added free-host deployment documentation in `DEPLOYMENT.md`.
+- Replaced HR-style dashboard IA with investor/CFO domain structure:
+  - `Overview`
+  - `Scenario Lab`
+  - `Model Inputs`
+  - `Risk Radar`
+  - `Data Room`
+- Rebuilt dashboard data adapter (`ui/dashboard_data.py`) around financial, valuation, and risk structures.
+- Added scenario stress modeling controls and sensitivity tornado analysis in `streamlit_app.py`.
+- Added model-input editing workflows for clients/markets, products/pricing/mix, BOM/input costs, OpEx/CapEx/funding, and valuation.
+- Fixed dark-mode chart consistency by explicitly styling Plotly canvas, axis, grid, and text colors.
+- Updated screenshot automation and docs for the new section set:
+  - `scripts/capture_ui_screenshots.py`
+  - `docs/design/ui-validation/README.md`
+  - `docs/design/ui-validation/screenshots/*`
+- Updated moodboard notes for investor/FP&A references in `docs/design/MOODBOARD.md`.
 
 ## Validation
 - `python -m pytest -q` -> 106 passed.
+- `python -m py_compile streamlit_app.py ui/dashboard_data.py` -> passed.
 - `python main.py reconcile-workbook --xlsx ...v15.xlsx` runs successfully.
 - `python scripts/capture_ui_screenshots.py` runs successfully and captures all light/dark sections.
 

@@ -1,50 +1,51 @@
 # ReSemis EPM UI Moodboard
 
-This moodboard synthesizes modern dashboard patterns for an enterprise EPM product used by executives, managers, and HR/finance stakeholders.
+This moodboard is now aligned to an investor/CEO/CFO use case, not HR workflows.
 
 ## Visual Direction
 
-- Professional minimalism: high-contrast typography, generous whitespace, constrained color palette with one accent.
-- Data-first hierarchy: top KPI strip, focused chart modules, then diagnostics tables.
-- Calm depth: soft radii, subtle panel shadows, restrained motion, clear affordances for filters and drill-down.
+- Investor cockpit style: strict hierarchy, clean surfaces, controlled accent color, low visual noise.
+- Decision-first narrative: headline KPIs first, then scenario spread, then risk and assumption drivers.
+- Auditability over decoration: every chart answers one financial question and maps to model assumptions.
 
-## Captured References
+## Key Reference Families
 
-### Inspiration Galleries
+### Dashboard shell and hierarchy
 
-1. Dribbble dashboard UI tag: `docs/design/moodboard/screenshots/dribbble_dashboard_ui.png`
-2. Dribbble performance dashboard search: `docs/design/moodboard/screenshots/dribbble_performance_dashboard.png`
-3. Awwwards dashboard gallery: `docs/design/moodboard/screenshots/awwwards_dashboard_gallery.png`
+1. Datadog dashboard layout patterns: `docs/design/moodboard/screenshots/datadog_dashboards_product.png`
+2. Power BI dashboard composition patterns: `docs/design/moodboard/screenshots/powerbi_design_tips.png`
+3. Tableau dashboard clarity rules: `docs/design/moodboard/screenshots/tableau_dashboard_best_practices.png`
 
-### Production Analytics References
+### Filters, controls, and drilldowns
 
-1. Power BI dashboard design guidance: `docs/design/moodboard/screenshots/powerbi_design_tips.png`
-2. Tableau dashboard best practices: `docs/design/moodboard/screenshots/tableau_dashboard_best_practices.png`
-3. Metabase filter UX patterns: `docs/design/moodboard/screenshots/metabase_filters.png`
-4. Datadog dashboard product page: `docs/design/moodboard/screenshots/datadog_dashboards_product.png`
-5. Looker dashboard docs: `docs/design/moodboard/screenshots/looker_dashboards_docs.png`
-6. Culture Amp action dashboard docs: `docs/design/moodboard/screenshots/cultureamp_action_dashboard.png`
-7. Lattice manager reporting docs: `docs/design/moodboard/screenshots/lattice_manager_reporting.png`
+1. Metabase filter system: `docs/design/moodboard/screenshots/metabase_filters.png`
+2. Looker dashboard exploration model: `docs/design/moodboard/screenshots/looker_dashboards_docs.png`
 
-## Pattern Extraction
+### FP&A and scenario-planning references
 
-- KPI strip at top with trend + delta and one headline value per card.
-- Left navigation + top control bar as the persistent shell.
-- Filter chips/dropdowns grouped by time, business unit, manager/team scope.
-- Right contextual panel for selected entity details and actions.
-- Grid modules that each answer one question (trend, distribution, variance, risk).
-- Dense tables only after high-level charts; include pagination and status badges.
-- Light and dark themes using shared semantic tokens (not one-off component overrides).
+1. Anaplan FP&A software positioning and use-case framing.
+2. Planful scenario-planning workflow concepts.
+3. Cube FP&A dashboard examples.
+4. CFI sensitivity-analysis/tornado pattern references.
+5. Local benchmark app: `C:/projects/resemis-model-audit/dashboard/app.py`
+
+## Pattern Synthesis Adopted
+
+- Top strip KPIs for Revenue, EBITDA Margin, Ending Cash, and Enterprise Value.
+- Dedicated Scenario Lab with deterministic scenario comparison plus stress sliders.
+- Explicit sensitivity view (single-metric tornado) for downside/upside communication.
+- Model Inputs workbench with editable client/market, product/pricing/mix, BOM/input costs, OpEx/CapEx/funding, and valuation blocks.
+- Risk Radar fed by model outputs (liquidity, concentration, working-capital pressure, valuation fragility).
+- Consistent light/dark mode tokens, including explicit chart canvas/grid/font colors to prevent unreadable dark-mode charts.
 
 ## Source URLs
 
-- https://dribbble.com/tags/dashboard-ui
-- https://dribbble.com/search/performance%20dashboard
-- https://www.awwwards.com/websites/dashboard/
+- https://www.datadoghq.com/product/platform/dashboards/
 - https://learn.microsoft.com/en-us/power-bi/create-reports/service-dashboards-design-tips
 - https://www.tableau.com/blog/best-practices-for-building-effective-dashboards
 - https://www.metabase.com/docs/latest/dashboards/filters
-- https://www.datadoghq.com/product/platform/dashboards/
 - https://cloud.google.com/looker/docs/viewing-dashboards
-- https://support.cultureamp.com/en/articles/7048527-admin-s-action-dashboard
-- https://help.lattice.com/hc/en-us/articles/1500004773502-The-Reporting-Page-for-Managers
+- https://www.anaplan.com/solutions/financial-planning-analysis-software/
+- https://planful.com/platform/scenario-planning/
+- https://www.cubesoftware.com/blog/fpa-dashboards
+- https://corporatefinanceinstitute.com/resources/valuation/sensitivity-analysis/

@@ -1,23 +1,23 @@
 <task type="auto">
-  <name>Create visual research moodboard</name>
-  <files>docs/design/MOODBOARD.md,docs/design/moodboard/screenshots/*,scripts/capture_reference_screenshots.py</files>
-  <action>Capture high-signal visual references and synthesize a coherent direction for the EPM UI.</action>
-  <verify>python scripts/capture_reference_screenshots.py</verify>
-  <done>Moodboard markdown and screenshots are committed and traceable.</done>
+  <name>Realign dashboard IA to investor/CFO workflows</name>
+  <files>streamlit_app.py,ui/dashboard_data.py,docs/design/MOODBOARD.md</files>
+  <action>Replace HR-oriented views with financial overview, scenario lab, model inputs, risk radar, and data room aligned to investor-grade decision flows.</action>
+  <verify>python -m py_compile streamlit_app.py ui/dashboard_data.py</verify>
+  <done>Navigation, charts, and context panels reflect ReSemis financial model use-cases.</done>
 </task>
 
 <task type="auto">
-  <name>Implement multi-view dashboard with dark mode</name>
-  <files>streamlit_app.py,ui/dashboard_data.py,.streamlit/config.toml,requirements.txt</files>
-  <action>Deliver executive, team, and individual views with KPI cards, chart grid, filters, pagination, contextual right panel, and tokenized theme switch.</action>
-  <verify>python -m streamlit run streamlit_app.py --server.headless true --server.port 8501</verify>
-  <done>Dashboard runs locally and all sections render in light and dark mode.</done>
+  <name>Implement assumptions workbench and stress modeling</name>
+  <files>streamlit_app.py</files>
+  <action>Add editable input forms for clients/markets, products/pricing/mix, BOM/input costs, OpEx/CapEx/funding, valuation; add stress sliders and sensitivity tornado.</action>
+  <verify>python -m pytest -q</verify>
+  <done>Users can modify core model assumptions and instantly see financial and valuation impact.</done>
 </task>
 
 <task type="auto">
-  <name>Validate screenshots and deployment path</name>
+  <name>Validate dark-mode coverage and updated navigation screenshots</name>
   <files>scripts/capture_ui_screenshots.py,docs/design/ui-validation/*,README.md,DEPLOYMENT.md</files>
-  <action>Capture light/dark UI screenshots per section and document free-host deployment workflow.</action>
+  <action>Capture light/dark screenshots for new sections and ensure chart backgrounds/axes/labels are theme-correct.</action>
   <verify>python scripts/capture_ui_screenshots.py</verify>
-  <done>Theme transition evidence and deployment instructions are available for team handoff.</done>
+  <done>All new sections have dark/light evidence and documentation is aligned.</done>
 </task>

@@ -17,11 +17,10 @@ The script launches the app on port `8503`, captures each section in both themes
 ## Coverage
 
 - Overview: `overview_light.png`, `overview_dark.png`
-- Teams: `teams_light.png`, `teams_dark.png`
-- Individuals: `individuals_light.png`, `individuals_dark.png`
-- Goals: `goals_light.png`, `goals_dark.png`
-- Reviews: `reviews_light.png`, `reviews_dark.png`
-- Settings: `settings_light.png`, `settings_dark.png`
+- Scenario Lab: `scenario_lab_light.png`, `scenario_lab_dark.png`
+- Model Inputs: `model_inputs_light.png`, `model_inputs_dark.png`
+- Risk Radar: `risk_radar_light.png`, `risk_radar_dark.png`
+- Data Room: `data_room_light.png`, `data_room_dark.png`
 
 ## Verification Checklist
 
