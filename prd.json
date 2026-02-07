@@ -1,17 +1,17 @@
 {
   "project": "ReSemis EPM",
-  "branchName": "ralph/workbook-v8-bridge-and-validation-closure",
-  "description": "Complete interrupted EPM implementation by closing assumptions-layer debt and adopting audited workbook V8 as executable input basis with reconciliation.",
+  "branchName": "ralph/epm-dashboard-ui-hosting",
+  "description": "Build a modern, dark-mode capable EPM web dashboard and package it for free-hosted collaboration.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Implement assumptions loader and schema validation",
-      "description": "As an engineer, I want assumptions to be loaded and validated centrally so runtime scenarios fail fast on invalid input structures.",
+      "title": "Create dashboard data adapter for UI views",
+      "description": "As a frontend engineer, I want a normalized data adapter from scenario outputs so dashboard pages can render consistent KPIs and tables.",
       "acceptanceCriteria": [
-        "Add a dedicated assumptions module with YAML load, deep-merge, and validation functions",
-        "Scenario execution uses the assumptions module instead of duplicated local logic",
-        "Validation checks required sections, month ordering, activation timing, mix-sum, BOM minimum quantity, and valuation rate constraints",
-        "Typecheck passes"
+        "Add module that transforms scenario outputs into monthly chart data and tabular datasets",
+        "Expose helper functions for overview, teams, individuals, goals, and reviews views",
+        "Typecheck passes",
+        "Tests pass"
       ],
       "priority": 1,
       "passes": false,
@@ -19,12 +19,13 @@
     },
     {
       "id": "US-002",
-      "title": "Add assumptions-layer tests",
-      "description": "As an engineer, I want tests for assumptions loading and validation so deferred foundation work is verifiably complete.",
+      "title": "Implement Streamlit app shell and navigation",
+      "description": "As a user, I want a clear app shell with left navigation and top controls so I can move across EPM sections quickly.",
       "acceptanceCriteria": [
-        "Add tests covering deep merge immutability, valid assumptions, mix-sum failure, and scenario override merge",
-        "Test suite runs successfully",
-        "Typecheck passes"
+        "Add Streamlit app entrypoint with left navigation for Overview, Teams, Individuals, Goals, Reviews, Settings",
+        "Add scenario selector and date range controls in the app shell",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
       "passes": false,
@@ -32,12 +33,14 @@
     },
     {
       "id": "US-003",
-      "title": "Fix valuation test isolation defect",
-      "description": "As a maintainer, I want valuation sensitivity tests to use isolated inputs so discount-rate assertions are deterministic.",
+      "title": "Build executive overview layout",
+      "description": "As an executive, I want top KPI tiles and a chart/table grid so I can understand company-level performance in one view.",
       "acceptanceCriteria": [
-        "Replace shallow-copy setup with deep copies in valuation tests",
-        "Discount sensitivity assertion passes consistently",
-        "Typecheck passes"
+        "Overview page includes 3 to 4 KPI tiles at top",
+        "Overview page includes responsive chart and table grid below KPIs",
+        "Overview page includes right-side contextual details panel",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
       "passes": false,
@@ -45,13 +48,13 @@
     },
     {
       "id": "US-004",
-      "title": "Create workbook V8 bridge module",
-      "description": "As a model owner, I want the audited workbook V8 parsed into Python assumptions and baseline metrics so it becomes the source basis.",
+      "title": "Build manager and individual performance views",
+      "description": "As a manager, I want team and individual views with filters and drill-down details so I can monitor and coach performance.",
       "acceptanceCriteria": [
-        "Add module that reads workbook V8 inputs with openpyxl",
-        "Compute baseline annual outputs matching workbook-linked formulas for revenue, COGS, OpEx, WC, cash, and EV",
-        "Generate engine assumptions from workbook values",
-        "Typecheck passes"
+        "Teams and Individuals pages render KPI cards, charts, and paginated tables",
+        "Rows can be selected to populate contextual right-side details",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
       "passes": false,
@@ -59,13 +62,14 @@
     },
     {
       "id": "US-005",
-      "title": "Add CLI commands for workbook generation and reconciliation",
-      "description": "As a user, I want one-command workflows to build assumptions from workbook and compare engine outputs to workbook baseline.",
+      "title": "Add dark mode with tokenized theme system",
+      "description": "As a user, I want a dark mode toggle that updates all key UI elements so the app is comfortable in different environments.",
       "acceptanceCriteria": [
-        "Add CLI command to build assumptions YAML from workbook path",
-        "Add CLI command to run reconciliation and print variance JSON",
-        "Commands run successfully with the provided V8 workbook",
-        "Typecheck passes"
+        "Add persistent dark mode toggle",
+        "Cards, charts, tables, navigation, and controls switch coherently between light and dark themes",
+        "Add smooth transitions for color/background changes",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
       ],
       "priority": 5,
       "passes": false,
@@ -73,15 +77,28 @@
     },
     {
       "id": "US-006",
-      "title": "Refresh project memory and execution artifacts",
-      "description": "As a collaborator, I want strict GSD and Ralph artifacts updated so project state and next actions are explicit.",
+      "title": "Capture design moodboard and UI verification screenshots",
+      "description": "As a product lead, I want visual evidence files so we can review inspiration and confirm dark/light rendering quality.",
       "acceptanceCriteria": [
-        "Create/update PROJECT, ROADMAP, STATE, PLAN, SUMMARY, ISSUES",
-        "Create .planning/codebase mapping files",
-        "Write/update prd.json in Ralph format",
+        "Add moodboard markdown with references and captured screenshots",
+        "Add script to capture reference screenshots",
+        "Add script/output screenshots for app light and dark modes",
         "Typecheck passes"
       ],
       "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Prepare free-host deployment configuration",
+      "description": "As a collaborator, I want deployment docs and config so the app can be hosted for free and shared by URL.",
+      "acceptanceCriteria": [
+        "Add Streamlit deployment configuration and runtime requirements",
+        "Add deployment guide for Streamlit Community Cloud and fallback free-host options",
+        "Typecheck passes"
+      ],
+      "priority": 7,
       "passes": false,
       "notes": ""
     }

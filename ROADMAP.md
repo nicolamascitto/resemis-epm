@@ -1,17 +1,23 @@
 # Roadmap
 
-## Phase 1: Foundation Closure
-- Implement assumptions loader/validator module.
-- Add assumptions tests and integrate into scenario runtime.
+## Milestone A: Engine Reliability (Completed)
+- Phase 1: Foundation closure.
+- Phase 2: Workbook bridge.
+- Phase 3: Reconciliation.
+- Phase 4: Hardening.
 
-## Phase 2: Workbook Bridge
-- Parse workbook V8 assumptions and derive model inputs.
-- Generate `assumptions/base.yaml` from workbook.
+## Milestone B: UI and Collaboration (Current)
 
-## Phase 3: Reconciliation
-- Compute workbook baseline outputs from sheet formulas.
-- Compare engine annual outputs against workbook baseline.
+### Phase 5: Design Research and Moodboard
+- Capture dashboard references from top galleries and production analytics tools.
+- Define a cohesive visual system and interaction model for EPM stakeholders.
 
-## Phase 4: Hardening
-- Fix test defects and keep full suite green.
-- Update state/progress and ship.
+### Phase 6: Dashboard UI Implementation
+- Implement Streamlit-based multi-view dashboard.
+- Add left navigation, KPI strip, chart grid, paginated tables, and contextual detail panel.
+- Implement dark mode toggle with tokenized theming.
+
+### Phase 7: Verification and Delivery
+- Capture light/dark screenshots and validate theme transitions.
+- Add deployment configuration and docs for free hosting.
+- Ship on `dev` branch with atomic commits and push to remote.

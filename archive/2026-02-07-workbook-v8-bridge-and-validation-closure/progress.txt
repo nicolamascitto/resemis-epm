@@ -537,14 +537,3 @@ END OF PROGRESS TRACKER
     [X] Re-generated assumptions/base.yaml from workbook V8
     [X] Test suite status: 106 passed
     [~] Residual: ending-cash and EV reconciliation drift remains due annual workbook vs monthly engine timing
-
-[2026-02-07] Milestone B - UI + Collaboration
-    [X] Built moodboard with external dashboard references and captured screenshots
-    [X] Implemented Streamlit dashboard UI (`streamlit_app.py`) with sections:
-        - Overview, Teams, Individuals, Goals, Reviews, Settings
-    [X] Added dark mode toggle and tokenized light/dark theming
-    [X] Added contextual right-side panel and paginated tables
-    [X] Captured light/dark screenshots for all sections via Playwright
-    [X] Added free-host deployment guide (`DEPLOYMENT.md`)
-    [~] GitLab push pending remote URL/credentials configuration
-    [~] Hosted deployment pending platform account binding

@@ -1,19 +1,21 @@
 # State
 
 ## Current Milestone
-Workbook-based completion and deterministic validation.
+UI and collaboration rollout for hosted team usage.
 
 ## Status
-- Phase 1: Completed
-- Phase 2: Completed
-- Phase 3: Completed (with known residual variance on ending cash/EV timing)
-- Phase 4: Completed
+- Milestone A (engine reliability): Completed.
+- Milestone B Phase 5 (design research): Completed.
+- Milestone B Phase 6 (UI implementation): Completed.
+- Milestone B Phase 7 (verification + deployment): Completed locally.
 
 ## Latest Outcomes
-- Added assumptions validation runtime module and tests.
-- Added workbook bridge CLI commands.
-- Rebuilt `assumptions/base.yaml` from audited V8 workbook.
-- Test suite: 106 passed.
+- Archived previous Ralph run artifacts for traceability.
+- Created moodboard references and screenshot capture workflow.
+- Implemented multi-page Streamlit dashboard with dark mode and contextual detail panel.
+- Captured light/dark screenshots for all UI sections.
+- Added free-host deployment guide and dashboard runtime setup updates.
 
 ## Residual Risks
-- Ending cash and EV are directionally aligned but not fully reconciled to 0.1% due model-granularity/timing differences between annual workbook and monthly engine.
+- GitLab remote URL is not currently configured in repo.
+- Free-host deployment requires platform auth and project binding.

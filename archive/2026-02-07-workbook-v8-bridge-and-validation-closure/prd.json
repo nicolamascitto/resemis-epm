@@ -1,0 +1,89 @@
+{
+  "project": "ReSemis EPM",
+  "branchName": "ralph/workbook-v8-bridge-and-validation-closure",
+  "description": "Complete interrupted EPM implementation by closing assumptions-layer debt and adopting audited workbook V8 as executable input basis with reconciliation.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement assumptions loader and schema validation",
+      "description": "As an engineer, I want assumptions to be loaded and validated centrally so runtime scenarios fail fast on invalid input structures.",
+      "acceptanceCriteria": [
+        "Add a dedicated assumptions module with YAML load, deep-merge, and validation functions",
+        "Scenario execution uses the assumptions module instead of duplicated local logic",
+        "Validation checks required sections, month ordering, activation timing, mix-sum, BOM minimum quantity, and valuation rate constraints",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add assumptions-layer tests",
+      "description": "As an engineer, I want tests for assumptions loading and validation so deferred foundation work is verifiably complete.",
+      "acceptanceCriteria": [
+        "Add tests covering deep merge immutability, valid assumptions, mix-sum failure, and scenario override merge",
+        "Test suite runs successfully",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Fix valuation test isolation defect",
+      "description": "As a maintainer, I want valuation sensitivity tests to use isolated inputs so discount-rate assertions are deterministic.",
+      "acceptanceCriteria": [
+        "Replace shallow-copy setup with deep copies in valuation tests",
+        "Discount sensitivity assertion passes consistently",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create workbook V8 bridge module",
+      "description": "As a model owner, I want the audited workbook V8 parsed into Python assumptions and baseline metrics so it becomes the source basis.",
+      "acceptanceCriteria": [
+        "Add module that reads workbook V8 inputs with openpyxl",
+        "Compute baseline annual outputs matching workbook-linked formulas for revenue, COGS, OpEx, WC, cash, and EV",
+        "Generate engine assumptions from workbook values",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add CLI commands for workbook generation and reconciliation",
+      "description": "As a user, I want one-command workflows to build assumptions from workbook and compare engine outputs to workbook baseline.",
+      "acceptanceCriteria": [
+        "Add CLI command to build assumptions YAML from workbook path",
+        "Add CLI command to run reconciliation and print variance JSON",
+        "Commands run successfully with the provided V8 workbook",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Refresh project memory and execution artifacts",
+      "description": "As a collaborator, I want strict GSD and Ralph artifacts updated so project state and next actions are explicit.",
+      "acceptanceCriteria": [
+        "Create/update PROJECT, ROADMAP, STATE, PLAN, SUMMARY, ISSUES",
+        "Create .planning/codebase mapping files",
+        "Write/update prd.json in Ralph format",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
